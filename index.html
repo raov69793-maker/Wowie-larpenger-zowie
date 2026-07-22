@@ -2,70 +2,86 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Larpessenger</title>
   <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#2196f3">
-  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <meta name="theme-color" content="#17212b">
   <style>
-    * { box-sizing: border-box; }
-    body { font-family: sans-serif; background: #121212; color: white; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; }
-    h2 { margin: 0 0 10px 0; color: #2196f3; }
-    .card { background: #1e1e1e; padding: 12px; border-radius: 10px; margin-bottom: 10px; font-size: 14px; }
-    #chat-box { flex: 1; background: #1e1e1e; border-radius: 10px; padding: 10px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .msg { background: #2a2a2a; padding: 8px 12px; border-radius: 8px; max-width: 80%; word-break: break-word; }
-    .msg.me { background: #1976d2; align-self: flex-end; }
-    .msg.peer { align-self: flex-start; }
-    .input-group { display: flex; gap: 8px; }
-    input { flex: 1; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; outline: none; }
-    button { padding: 12px 16px; background: #2196f3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
-    button:disabled { background: #555; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background: #0e1621; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+    
+    /* Шапка Telegram */
+    .header { background: #17212b; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #101419; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; }
+    .header-info { display: flex; flex-direction: column; }
+    .header-title { font-weight: 600; font-size: 16px; color: #f5f5f5; }
+    .header-status { font-size: 12px; color: #64b5f6; }
+
+    /* Панель профиля и поиска */
+    .user-bar { background: #242f3d; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #101419; }
+    .input-row { display: flex; gap: 8px; }
+    .user-bar input { flex: 1; padding: 8px 12px; background: #17212b; border: 1px solid #2b5278; color: #fff; border-radius: 8px; outline: none; font-size: 13px; }
+    .user-bar button { padding: 8px 14px; background: #2b5278; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+
+    /* Чат-зона */
+    #chat-box { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: #0e1621; background-image: radial-gradient(#17212b 1px, transparent 0); background-size: 16px 16px; }
+
+    /* Сообщения */
+    .msg { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 14px; line-height: 1.4; position: relative; word-break: break-word; }
+    .msg.me { background: #2b5278; color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
+    .msg.peer { background: #182533; color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; }
+    .msg-author { font-size: 11px; font-weight: bold; margin-bottom: 3px; color: #64b5f6; }
+    .msg.me .msg-author { display: none; }
+    .msg-time { font-size: 10px; color: rgba(255,255,255,0.5); float: right; margin-left: 8px; margin-top: 4px; }
+
+    /* Панель ввода */
+    .input-bar { background: #17212b; padding: 8px 12px; display: flex; gap: 8px; align-items: center; border-top: 1px solid #101419; }
+    .input-bar input { flex: 1; padding: 10px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 20px; outline: none; font-size: 14px; }
+    .input-bar button { background: #5288c1; border: none; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+    #error-box { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,0,0,0.9); color: white; padding: 8px; font-size: 11px; z-index: 9999; display: none; }
   </style>
 </head>
 <body>
 
-  <h2>Larpessenger 🚀</h2>
+  <div id="error-box"></div>
 
-  <div class="card">
-    <div><b>Твой ID:</b> <span id="my-id">Генерация...</span></div>
-    <button id="btn-push" style="margin-top: 8px; width: 100%; font-size: 12px; padding: 6px;">🔔 Включить уведомления</button>
+  <!-- Шапка -->
+  <div class="header">
+    <div class="header-info">
+      <div class="header-title" id="chat-title">Larpessenger</div>
+      <div class="header-status" id="chat-status">Чат не выбран</div>
+    </div>
+    <button id="btn-push" style="background:none; border:none; font-size:18px; cursor:pointer;">🔔</button>
   </div>
 
-  <div class="card">
-    <div class="input-group">
-      <input type="text" id="peer-id-input" placeholder="Введи ID собеседника">
-      <button id="btn-connect">Связаться</button>
+  <!-- Панель профиля и поиска по Юзернейму -->
+  <div class="user-bar">
+    <div class="input-row">
+      <input type="text" id="my-username" placeholder="Твой @username (без @)" value="user1">
+    </div>
+    <div class="input-row">
+      <input type="text" id="target-username" placeholder="Найти собеседника по @username">
+      <button id="btn-start-chat">Написать</button>
     </div>
   </div>
 
+  <!-- История чата -->
   <div id="chat-box"></div>
 
-  <div class="input-group">
-    <input type="text" id="msg-input" placeholder="Сообщение..." disabled>
-    <button id="btn-send" disabled>➔</button>
+  <!-- Панель ввода -->
+  <div class="input-bar">
+    <input type="text" id="msg-input" placeholder="Написать сообщение...">
+    <button id="btn-send">➔</button>
   </div>
 
-  <!-- Экранный отладчик ошибок -->
-  <script>
-    window.onerror = function(msg, url, line) {
-      let errBox = document.getElementById('error-screen-box');
-      if (!errBox) {
-        errBox = document.createElement('div');
-        errBox.id = 'error-screen-box';
-        errBox.style.cssText = 'position:fixed; bottom:0; left:0; right:0; background:rgba(255,0,0,0.85); color:white; padding:10px; font-size:12px; z-index:9999; max-height:150px; overflow-y:auto;';
-        document.body.appendChild(errBox);
-      }
-      errBox.innerHTML += `<div>❌ ${msg} (стр. ${line})</div>`;
-    };
-  </script>
-
-  <!-- Firebase & P2P Логика -->
+  <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBJsk9oUrKLMV0L7tgyxTzMZ-WgRwVgYDA",
+      apiKey: "AIzaSyBJsk9oUrKLMV0L7tgyxTzMZ-WgRwWgYDA",
       authDomain: "larpessenger.firebaseapp.com",
       projectId: "larpessenger",
       storageBucket: "larpessenger.firebasestorage.app",
@@ -74,81 +90,97 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
     const messaging = getMessaging(app);
     const vapidKey = "BJ8SpCv5f19isktlc5ZN35BGwV62A1wgqzGBaZn60vKQnnn-z5SLCUs4pn7tkbtDYoWqPcp99aFb066iQ0XQFB8";
 
-    // Переменная для активного P2P соединения
-    let conn = null;
+    let currentRoom = null;
+    let unsubscribe = null;
 
-    // Инициализация PeerJS
-    const peer = new Peer({
-      config: {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' }
-        ]
+    // Генерация названия приватного чата (алфавитный порядок, чтобы у обоих юзеров совпадал ID комнаты)
+    function getPrivateChatId(userA, userB) {
+      return [userA.toLowerCase().trim(), userB.toLowerCase().trim()].sort().join("_");
+    }
+
+    // Подключение к диалогу
+    function openChatWith(targetUser) {
+      const myUser = document.getElementById('my-username').value.trim();
+      if (!myUser || !targetUser) {
+        alert("Заполни свой юзернейм и юзернейм собеседника!");
+        return;
       }
-    });
 
-    peer.on('open', (id) => {
-      console.log('My Peer ID:', id);
-      document.getElementById('my-id').innerText = id;
-    });
+      currentRoom = getPrivateChatId(myUser, targetUser);
+      document.getElementById('chat-status').innerText = `Диалог с @${targetUser}`;
+      document.getElementById('chat-box').innerHTML = '';
 
-    peer.on('error', (err) => {
-      console.error('PeerJS Error:', err);
-      document.getElementById('my-id').innerText = 'Ошибка: ' + err.type;
-    });
+      if (unsubscribe) unsubscribe();
 
-    // Входящее подключение
-    peer.on('connection', (connection) => {
-      conn = connection;
-      setupChat();
-    });
+      const messagesRef = collection(db, "chats", currentRoom, "messages");
+      const q = query(messagesRef, orderBy("timestamp", "asc"));
 
-    // Исходящее подключение
-    document.getElementById('btn-connect').addEventListener('click', () => {
-      const destId = document.getElementById('peer-id-input').value.trim();
-      if (destId) {
-        conn = peer.connect(destId);
-        setupChat();
-      }
-    });
-
-    function setupChat() {
-      document.getElementById('msg-input').disabled = false;
-      document.getElementById('btn-send').disabled = false;
-      appendMessage('Система', 'Соединение установлено! Начинайте общение.');
-
-      conn.on('data', (data) => {
-        appendMessage('Собеседник', data, 'peer');
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        document.getElementById('chat-box').innerHTML = '';
+        snapshot.forEach((doc) => {
+          appendMessage(doc.data());
+        });
       });
     }
 
     // Отправка сообщения
-    function sendMessage() {
+    async function sendMessage() {
       const input = document.getElementById('msg-input');
       const text = input.value.trim();
-      if (text && conn) {
-        conn.send(text);
-        appendMessage('Вы', text, 'me');
+      const myUser = document.getElementById('my-username').value.trim();
+
+      if (text && currentRoom && myUser) {
         input.value = '';
+        await addDoc(collection(db, "chats", currentRoom, "messages"), {
+          text: text,
+          author: myUser,
+          timestamp: serverTimestamp()
+        });
+      } else if (!currentRoom) {
+        alert("Сначала введи @username собеседника и нажми 'Написать'!");
       }
     }
+
+    // Отрисовка сообщения
+    function appendMessage(data) {
+      const box = document.getElementById('chat-box');
+      const myUser = document.getElementById('my-username').value.trim().toLowerCase();
+      const isMe = data.author.toLowerCase() === myUser;
+
+      const div = document.createElement('div');
+      div.className = `msg ${isMe ? 'me' : 'peer'}`;
+
+      let timeStr = "";
+      if (data.timestamp) {
+        const date = data.timestamp.toDate();
+        timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+
+      div.innerHTML = `
+        <div class="msg-author">@${data.author}</div>
+        <span class="msg-text"></span>
+        <span class="msg-time">${timeStr}</span>
+      `;
+      
+      div.querySelector('.msg-text').innerText = data.text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // Кнопки и события
+    document.getElementById('btn-start-chat').addEventListener('click', () => {
+      const target = document.getElementById('target-username').value.replace('@', '').trim();
+      if (target) openChatWith(target);
+    });
 
     document.getElementById('btn-send').addEventListener('click', sendMessage);
     document.getElementById('msg-input').addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendMessage();
     });
-
-    function appendMessage(sender, text, type = '') {
-      const box = document.getElementById('chat-box');
-      const div = document.createElement('div');
-      div.className = `msg ${type}`;
-      div.innerText = `${text}`;
-      box.appendChild(div);
-      box.scrollTop = box.scrollHeight;
-    }
 
     // Push Уведомления
     if ('serviceWorker' in navigator) {
@@ -157,7 +189,7 @@
           const permission = await Notification.requestPermission();
           if (permission === 'granted') {
             await getToken(messaging, { vapidKey, serviceWorkerRegistration: registration });
-            alert('Уведомления готовы!');
+            alert('Уведомления включены!');
           }
         });
       });
