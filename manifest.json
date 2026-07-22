@@ -1,11 +1,11 @@
 {
-  "name": "larpessenger",
-  "short_name": "larpessenger",
+  "name": "Larpessenger",
+  "short_name": "Larpessenger",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#121212",
   "theme_color": "#2196f3",
-  "icons": [ 
+  "icons": [
     {
       "src": "https://via.placeholder.com/192",
       "sizes": "192x192",
