@@ -45,6 +45,20 @@
     <button id="btn-send" disabled>➔</button>
   </div>
 
+  <!-- Экранный отладчик ошибок -->
+  <script>
+    window.onerror = function(msg, url, line) {
+      let errBox = document.getElementById('error-screen-box');
+      if (!errBox) {
+        errBox = document.createElement('div');
+        errBox.id = 'error-screen-box';
+        errBox.style.cssText = 'position:fixed; bottom:0; left:0; right:0; background:rgba(255,0,0,0.85); color:white; padding:10px; font-size:12px; z-index:9999; max-height:150px; overflow-y:auto;';
+        document.body.appendChild(errBox);
+      }
+      errBox.innerHTML += `<div>❌ ${msg} (стр. ${line})</div>`;
+    };
+  </script>
+
   <!-- Firebase & P2P Логика -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -63,27 +77,28 @@
     const messaging = getMessaging(app);
     const vapidKey = "BJ8SpCv5f19isktlc5ZN35BGwV62A1wgqzGBaZn60vKQnnn-z5SLCUs4pn7tkbtDYoWqPcp99aFb066iQ0XQFB8";
 
-    // 1. Инициализация PeerJS (P2P)
-// Используем надежную конфигурацию с публичным STUN-сервером Google
-const peer = new Peer({
-  config: {
-    iceServers: [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' }
-    ]
-  }
-});
+    // Переменная для активного P2P соединения
+    let conn = null;
 
-peer.on('open', (id) => {
-  console.log('My Peer ID:', id);
-  document.getElementById('my-id').innerText = id;
-});
+    // Инициализация PeerJS
+    const peer = new Peer({
+      config: {
+        iceServers: [
+          { urls: 'stun:stun.l.google.com:19302' },
+          { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+      }
+    });
 
-// Если бесплатный сервер PeerJS подлагивает или упал
-peer.on('error', (err) => {
-  console.error('PeerJS Error:', err);
-  document.getElementById('my-id').innerText = 'Ошибка подключения (см. консоль)';
-});
+    peer.on('open', (id) => {
+      console.log('My Peer ID:', id);
+      document.getElementById('my-id').innerText = id;
+    });
+
+    peer.on('error', (err) => {
+      console.error('PeerJS Error:', err);
+      document.getElementById('my-id').innerText = 'Ошибка: ' + err.type;
+    });
 
     // Входящее подключение
     peer.on('connection', (connection) => {
