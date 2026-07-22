@@ -3,38 +3,79 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>P2P Chat</title>
+  <title>Larpessenger</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2196f3">
-  <!-- Иконка для Safari на iOS -->
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="apple-touch-icon" href="https://via.placeholder.com/192">
 </head>
 <body style="font-family: sans-serif; background: #121212; color: white; padding: 20px;">
 
-  <h1>P2P Мессенджер</h1>
-  <p id="status">Проверка PWA...</p>
-  <button id="btn-push" style="padding: 10px 20px; font-size: 16px;">Включить уведомления</button>
+  <h2>Larpessenger</h2>
+  <p id="status">Загрузка Firebase...</p>
+  <button id="btn-push" style="padding: 12px 20px; font-size: 16px; background: #2196f3; color: white; border: none; border-radius: 8px;">
+    Включить уведомления
+  </button>
 
-  <script>
-    // Регистрируем Service Worker для PWA и пушей
+  <!-- Подключаем Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+
+    // Твой Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJsk9oUrKLMV0L7tgyxTzMZ-WgRwVgYDA",
+      authDomain: "larpessenger.firebaseapp.com",
+      projectId: "larpessenger",
+      storageBucket: "larpessenger.firebasestorage.app",
+      messagingSenderId: "25247732078",
+      appId: "1:25247732078:web:cf9fca7a55f452ba1b317f"
+    };
+
+    // Инициализация
+    const app = initializeApp(firebaseConfig);
+    const messaging = getMessaging(app);
+
+    // Твой VAPID ключ
+    const vapidKey = "BJ8SpCv5f19isktlc5ZN35BGwV62A1wgqzGBaZn60vKQnnn-z5SLCUs4pn7tkbtDYoWqPcp99aFb066iQ0XQFB8";
+
+    // Регистрируем Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
-        .then(() => {
-          document.getElementById('status').innerText = 'PWA готово к работе!';
-        })
-        .catch(err => {
-          document.getElementById('status').innerText = 'Ошибка SW: ' + err;
+        .then((registration) => {
+          document.getElementById('status').innerText = 'PWA готово! Нажми кнопку ниже.';
+          
+          // Обработчик кнопки
+          document.getElementById('btn-push').addEventListener('click', async () => {
+            try {
+              const permission = await Notification.requestPermission();
+              if (permission === 'granted') {
+                const currentToken = await getToken(messaging, { 
+                  vapidKey: vapidKey,
+                  serviceWorkerRegistration: registration 
+                });
+                
+                if (currentToken) {
+                  console.log('FCM Token:', currentToken);
+                  alert('Уведомления успешно включены!');
+                  document.getElementById('status').innerText = 'Токен получен! (см. консоль)';
+                } else {
+                  alert('Не удалось получить токен доступа.');
+                }
+              } else {
+                alert('Разрешение на уведомления заблокировано.');
+              }
+            } catch (err) {
+              console.error('Ошибка получения токена:', err);
+              alert('Ошибка: ' + err.message);
+            }
+          });
         });
     }
 
-    // Запрос разрешения на уведомления
-    document.getElementById('btn-push').addEventListener('click', async () => {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        alert('Уведомления разрешены!');
-      } else {
-        alert('Разрешение отклонено');
-      }
+    // Прием сообщений, когда приложение ОТКРЫТО
+    onMessage(messaging, (payload) => {
+      console.log('Новое сообщение в фокусе:', payload);
+      alert(`Сообщение от ${payload.notification?.title}: ${payload.notification?.body}`);
     });
   </script>
 </body>
