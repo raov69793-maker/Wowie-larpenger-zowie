@@ -6,22 +6,50 @@
   <title>Larpessenger</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#2196f3">
-  <link rel="apple-touch-icon" href="https://via.placeholder.com/192">
+  <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: sans-serif; background: #121212; color: white; margin: 0; padding: 15px; display: flex; flex-direction: column; height: 100vh; }
+    h2 { margin: 0 0 10px 0; color: #2196f3; }
+    .card { background: #1e1e1e; padding: 12px; border-radius: 10px; margin-bottom: 10px; font-size: 14px; }
+    #chat-box { flex: 1; background: #1e1e1e; border-radius: 10px; padding: 10px; overflow-y: auto; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .msg { background: #2a2a2a; padding: 8px 12px; border-radius: 8px; max-width: 80%; word-break: break-word; }
+    .msg.me { background: #1976d2; align-self: flex-end; }
+    .msg.peer { align-self: flex-start; }
+    .input-group { display: flex; gap: 8px; }
+    input { flex: 1; padding: 12px; background: #2a2a2a; border: 1px solid #444; color: white; border-radius: 8px; outline: none; }
+    button { padding: 12px 16px; background: #2196f3; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+    button:disabled { background: #555; }
+  </style>
 </head>
-<body style="font-family: sans-serif; background: #121212; color: white; padding: 20px;">
+<body>
 
-  <h2>Larpessenger</h2>
-  <p id="status">Загрузка Firebase...</p>
-  <button id="btn-push" style="padding: 12px 20px; font-size: 16px; background: #2196f3; color: white; border: none; border-radius: 8px;">
-    Включить уведомления
-  </button>
+  <h2>Larpessenger 🚀</h2>
 
-  <!-- Подключаем Firebase SDK -->
+  <div class="card">
+    <div><b>Твой ID:</b> <span id="my-id">Генерация...</span></div>
+    <button id="btn-push" style="margin-top: 8px; width: 100%; font-size: 12px; padding: 6px;">🔔 Включить уведомления</button>
+  </div>
+
+  <div class="card">
+    <div class="input-group">
+      <input type="text" id="peer-id-input" placeholder="Введи ID собеседника">
+      <button id="btn-connect">Связаться</button>
+    </div>
+  </div>
+
+  <div id="chat-box"></div>
+
+  <div class="input-group">
+    <input type="text" id="msg-input" placeholder="Сообщение..." disabled>
+    <button id="btn-send" disabled>➔</button>
+  </div>
+
+  <!-- Firebase & P2P Логика -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
+    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
-    // Твой Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyBJsk9oUrKLMV0L7tgyxTzMZ-WgRwVgYDA",
       authDomain: "larpessenger.firebaseapp.com",
@@ -31,52 +59,80 @@
       appId: "1:25247732078:web:cf9fca7a55f452ba1b317f"
     };
 
-    // Инициализация
     const app = initializeApp(firebaseConfig);
     const messaging = getMessaging(app);
-
-    // Твой VAPID ключ
     const vapidKey = "BJ8SpCv5f19isktlc5ZN35BGwV62A1wgqzGBaZn60vKQnnn-z5SLCUs4pn7tkbtDYoWqPcp99aFb066iQ0XQFB8";
 
-    // Регистрируем Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-          document.getElementById('status').innerText = 'PWA готово! Нажми кнопку ниже.';
-          
-          // Обработчик кнопки
-          document.getElementById('btn-push').addEventListener('click', async () => {
-            try {
-              const permission = await Notification.requestPermission();
-              if (permission === 'granted') {
-                const currentToken = await getToken(messaging, { 
-                  vapidKey: vapidKey,
-                  serviceWorkerRegistration: registration 
-                });
-                
-                if (currentToken) {
-                  console.log('FCM Token:', currentToken);
-                  alert('Уведомления успешно включены!');
-                  document.getElementById('status').innerText = 'Токен получен! (см. консоль)';
-                } else {
-                  alert('Не удалось получить токен доступа.');
-                }
-              } else {
-                alert('Разрешение на уведомления заблокировано.');
-              }
-            } catch (err) {
-              console.error('Ошибка получения токена:', err);
-              alert('Ошибка: ' + err.message);
-            }
-          });
-        });
+    // 1. Инициализация PeerJS (P2P)
+    const peer = new Peer();
+    let conn = null;
+
+    peer.on('open', (id) => {
+      document.getElementById('my-id').innerText = id;
+    });
+
+    // Входящее подключение
+    peer.on('connection', (connection) => {
+      conn = connection;
+      setupChat();
+    });
+
+    // Исходящее подключение
+    document.getElementById('btn-connect').addEventListener('click', () => {
+      const destId = document.getElementById('peer-id-input').value.trim();
+      if (destId) {
+        conn = peer.connect(destId);
+        setupChat();
+      }
+    });
+
+    function setupChat() {
+      document.getElementById('msg-input').disabled = false;
+      document.getElementById('btn-send').disabled = false;
+      appendMessage('Система', 'Соединение установлено! Начинайте общение.');
+
+      conn.on('data', (data) => {
+        appendMessage('Собеседник', data, 'peer');
+      });
     }
 
-    // Прием сообщений, когда приложение ОТКРЫТО
-    onMessage(messaging, (payload) => {
-      console.log('Новое сообщение в фокусе:', payload);
-      alert(`Сообщение от ${payload.notification?.title}: ${payload.notification?.body}`);
+    // Отправка сообщения
+    function sendMessage() {
+      const input = document.getElementById('msg-input');
+      const text = input.value.trim();
+      if (text && conn) {
+        conn.send(text);
+        appendMessage('Вы', text, 'me');
+        input.value = '';
+      }
+    }
+
+    document.getElementById('btn-send').addEventListener('click', sendMessage);
+    document.getElementById('msg-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') sendMessage();
     });
+
+    function appendMessage(sender, text, type = '') {
+      const box = document.getElementById('chat-box');
+      const div = document.createElement('div');
+      div.className = `msg ${type}`;
+      div.innerText = `${text}`;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    // Push Уведомления
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((registration) => {
+        document.getElementById('btn-push').addEventListener('click', async () => {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            await getToken(messaging, { vapidKey, serviceWorkerRegistration: registration });
+            alert('Уведомления готовы!');
+          }
+        });
+      });
+    }
   </script>
 </body>
 </html>
