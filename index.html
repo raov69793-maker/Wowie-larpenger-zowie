@@ -64,12 +64,26 @@
     const vapidKey = "BJ8SpCv5f19isktlc5ZN35BGwV62A1wgqzGBaZn60vKQnnn-z5SLCUs4pn7tkbtDYoWqPcp99aFb066iQ0XQFB8";
 
     // 1. Инициализация PeerJS (P2P)
-    const peer = new Peer();
-    let conn = null;
+// Используем надежную конфигурацию с публичным STUN-сервером Google
+const peer = new Peer({
+  config: {
+    iceServers: [
+      { urls: 'stun:stun.l.google.com:19302' },
+      { urls: 'stun:stun1.l.google.com:19302' }
+    ]
+  }
+});
 
-    peer.on('open', (id) => {
-      document.getElementById('my-id').innerText = id;
-    });
+peer.on('open', (id) => {
+  console.log('My Peer ID:', id);
+  document.getElementById('my-id').innerText = id;
+});
+
+// Если бесплатный сервер PeerJS подлагивает или упал
+peer.on('error', (err) => {
+  console.error('PeerJS Error:', err);
+  document.getElementById('my-id').innerText = 'Ошибка подключения (см. консоль)';
+});
 
     // Входящее подключение
     peer.on('connection', (connection) => {
