@@ -31,14 +31,17 @@
     .search-container input { flex: 1; padding: 10px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 10px; outline: none; font-size: 14px; }
     .search-container button { padding: 10px 14px; background: #5288c1; color: #fff; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
 
-    /* Вертикальный список чатов */
+    /* Список чатов */
     #chats-list-vertical { flex: 1; overflow-y: auto; background: #0e1621; display: flex; flex-direction: column; }
-    .chat-row { display: flex; align-items: center; padding: 12px 16px; gap: 12px; border-bottom: 1px solid #17212b; cursor: pointer; }
+    .chat-row { display: flex; align-items: center; padding: 12px 16px; gap: 12px; border-bottom: 1px solid #17212b; cursor: pointer; position: relative; }
     .chat-row:active { background: #17212b; }
     .avatar { width: 48px; height: 48px; border-radius: 50%; background: #2b5278; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 18px; flex-shrink: 0; object-fit: cover; }
     .chat-info { flex: 1; overflow: hidden; }
     .chat-name { font-weight: 600; font-size: 15px; color: #fff; margin-bottom: 4px; }
     .chat-preview { font-size: 13px; color: #7f91a4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Бэдж непрочитанных сообщений */
+    .unread-badge { background: #5288c1; color: #fff; font-size: 12px; font-weight: bold; min-width: 22px; height: 22px; border-radius: 11px; padding: 0 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
     /* Нижняя панель навигации */
     .bottom-nav { background: #17212b; height: 56px; display: flex; border-top: 1px solid #101419; flex-shrink: 0; }
@@ -52,6 +55,7 @@
 
     .chat-header { background: #17212b; padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid #101419; flex-shrink: 0; }
     .back-btn { background: none; border: none; color: #5288c1; font-size: 20px; cursor: pointer; padding-right: 8px; }
+    .chat-header-user { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; }
 
     /* Сообщения */
     #chat-box { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: #0e1621; background-image: radial-gradient(#17212b 1px, transparent 0); background-size: 16px 16px; }
@@ -64,15 +68,14 @@
     .input-bar input { flex: 1; padding: 10px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 20px; outline: none; font-size: 14px; }
     .input-bar button { background: #5288c1; border: none; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 
-    /* Настройки профиля */
-    #profile-modal { position: fixed; inset: 0; background: #0e1621; z-index: 1500; display: none; flex-direction: column; padding: 20px; }
-    #profile-modal.active { display: flex; }
+    /* Модальные окна (Профиль свой / чужой) */
+    .modal-overlay { position: fixed; inset: 0; background: #0e1621; z-index: 1500; display: none; flex-direction: column; padding: 20px; }
+    .modal-overlay.active { display: flex; }
     .profile-card { background: #17212b; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
     
-    /* Кликабельная аватарка в профиле */
     .avatar-upload-wrapper { position: relative; cursor: pointer; }
     .avatar-upload-wrapper:hover::after { content: '📷'; position: absolute; inset: 0; background: rgba(0,0,0,0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
-    .profile-avatar-preview { width: 100px; height: 100px; border-radius: 50%; background: #2b5278; object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; }
+    .profile-avatar-preview { width: 110px; height: 110px; border-radius: 50%; background: #2b5278; object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; }
 
     #error-box { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,0,0,0.9); color: white; padding: 8px; font-size: 11px; z-index: 9999; display: none; }
   </style>
@@ -115,11 +118,15 @@
   <div id="chat-screen">
     <div class="chat-header">
       <button class="back-btn" id="btn-back">➔</button>
-      <img id="chat-peer-avatar" class="avatar" style="width:36px; height:36px; display:none;">
-      <div id="chat-peer-avatar-ph" class="avatar" style="width:36px; height:36px;">?</div>
-      <div>
-        <div id="chat-peer-title" class="chat-name">@username</div>
-        <div style="font-size:12px; color:#64b5f6;">в сети</div>
+
+      <!-- Кликабельная шапка пользователя -->
+      <div class="chat-header-user" id="btn-open-peer-profile">
+        <img id="chat-peer-avatar" class="avatar" style="width:38px; height:38px; display:none;">
+        <div id="chat-peer-avatar-ph" class="avatar" style="width:38px; height:38px;">?</div>
+        <div>
+          <div id="chat-peer-title" class="chat-name">@username</div>
+          <div style="font-size:12px; color:#64b5f6;">в сети</div>
+        </div>
       </div>
     </div>
 
@@ -131,27 +138,36 @@
     </div>
   </div>
 
-  <!-- Настройки профиля -->
-  <div id="profile-modal">
+  <!-- Настройки СВОЕГО профиля -->
+  <div id="profile-modal" class="modal-overlay">
     <div class="app-header" style="background:transparent; padding:0 0 16px 0;">
-      <div class="app-title">Настройки профиля</div>
+      <div class="app-title">Мой профиль</div>
       <button id="btn-close-profile" style="background:none; border:none; color:#5288c1; font-size:16px;">Закрыть</button>
     </div>
     <div class="profile-card">
-      
-      <!-- Кликабельная область выборки фото -->
       <div class="avatar-upload-wrapper" id="btn-trigger-file">
         <div id="profile-avatar-ph" class="profile-avatar-preview">?</div>
         <img id="profile-avatar-img" class="profile-avatar-preview" style="display:none;">
       </div>
-      
-      <!-- Скрытый инпут файла -->
       <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
-
       <p id="profile-username-text" style="font-weight:600; font-size:18px; color:#fff;"></p>
-      
       <button id="btn-choose-file" class="auth-btn">Выбрать фото из галереи 📷</button>
       <p id="upload-status" style="font-size:12px; color:#7f91a4; display:none;">Сжатие и загрузка...</p>
+    </div>
+  </div>
+
+  <!-- Окно ЧУЖОГО профиля -->
+  <div id="peer-profile-modal" class="modal-overlay">
+    <div class="app-header" style="background:transparent; padding:0 0 16px 0;">
+      <div class="app-title">Профиль пользователя</div>
+      <button id="btn-close-peer-profile" style="background:none; border:none; color:#5288c1; font-size:16px;">Закрыть</button>
+    </div>
+    <div class="profile-card">
+      <div>
+        <div id="peer-modal-avatar-ph" class="profile-avatar-preview">?</div>
+        <img id="peer-modal-avatar-img" class="profile-avatar-preview" style="display:none;">
+      </div>
+      <p id="peer-modal-username-text" style="font-weight:600; font-size:20px; color:#fff;"></p>
     </div>
   </div>
 
@@ -167,7 +183,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDoc, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBJsk9oUrKLMV0L7tgyxTzMZ-WgRwVgYDA",
@@ -180,13 +195,13 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const messaging = getMessaging(app);
-    const vapidKey = "BJ8SpCv5f19isktlc5ZN35BGwV62A1wgqzGBaZn60vKQnnn-z5SLCUs4pn7tkbtDYoWqPcp99aFb066iQ0XQFB8";
 
     let currentUser = localStorage.getItem("larp_username") || null;
     let activePeer = null;
     let currentRoom = null;
-    let unsubscribe = null;
+    let unsubscribeChat = null;
+    let chatListeners = {};
+    let unreadCounts = {};
     let myChats = JSON.parse(localStorage.getItem("larp_chats") || "[]");
     let usersCache = {};
 
@@ -201,7 +216,6 @@
 
       currentUser = input;
       localStorage.setItem("larp_username", input);
-
       setDoc(doc(db, "users", input), { username: input }, { merge: true });
 
       document.getElementById('auth-screen').style.display = 'none';
@@ -211,6 +225,7 @@
     function initApp() {
       loadUserData(currentUser);
       renderChatsList();
+      listenToAllChatsUnread();
     }
 
     async function loadUserData(username) {
@@ -227,6 +242,50 @@
 
     function getPrivateChatId(userA, userB) {
       return [userA.toLowerCase().trim(), userB.toLowerCase().trim()].sort().join("_");
+    }
+
+    /* Слушатель новых сообщений во всех чатах для отслеживания счетчика */
+    function listenToAllChatsUnread() {
+      myChats.forEach(peer => {
+        const roomId = getPrivateChatId(currentUser, peer);
+        if (chatListeners[roomId]) return;
+
+        unreadCounts[peer] = unreadCounts[peer] || 0;
+        let isInitialLoad = true;
+
+        const q = query(collection(db, "chats", roomId, "messages"), orderBy("timestamp", "asc"));
+        
+        chatListeners[roomId] = onSnapshot(q, (snapshot) => {
+          if (isInitialLoad) {
+            isInitialLoad = false;
+            return;
+          }
+
+          snapshot.docChanges().forEach((change) => {
+            if (change.type === "added") {
+              const msg = change.doc.data();
+              // Если сообщение от собеседника и мы сейчас НЕ открыли этот чат
+              if (msg.author.toLowerCase() !== currentUser.toLowerCase() && activePeer !== peer) {
+                unreadCounts[peer] = (unreadCounts[peer] || 0) + 1;
+                updateUnreadBadge(peer);
+              }
+            }
+          });
+        });
+      });
+    }
+
+    function updateUnreadBadge(peer) {
+      const badge = document.getElementById(`unread-badge-${peer}`);
+      if (badge) {
+        const count = unreadCounts[peer] || 0;
+        if (count > 0) {
+          badge.innerText = count;
+          badge.style.display = 'flex';
+        } else {
+          badge.style.display = 'none';
+        }
+      }
     }
 
     async function renderChatsList() {
@@ -248,11 +307,16 @@
           avatarHtml = `<img src="${uData.avatarUrl}" class="avatar">`;
         }
 
+        const count = unreadCounts[user] || 0;
+
         row.innerHTML = `
           ${avatarHtml}
           <div class="chat-info">
             <div class="chat-name">@${user}</div>
             <div class="chat-preview">Нажмите, чтобы открыть диалог</div>
+          </div>
+          <div id="unread-badge-${user}" class="unread-badge" style="display: ${count > 0 ? 'flex' : 'none'};">
+            ${count}
           </div>
         `;
 
@@ -263,9 +327,15 @@
 
     async function openChatWith(targetUser) {
       activePeer = targetUser;
+      
+      // Сбрасываем непрочитанные при входе в чат
+      unreadCounts[targetUser] = 0;
+      updateUnreadBadge(targetUser);
+
       if (!myChats.includes(targetUser) && targetUser !== currentUser) {
         myChats.push(targetUser);
         localStorage.setItem("larp_chats", JSON.stringify(myChats));
+        listenToAllChatsUnread();
       }
 
       currentRoom = getPrivateChatId(currentUser, targetUser);
@@ -287,18 +357,19 @@
 
       document.getElementById('chat-screen').classList.add('active');
 
-      if (unsubscribe) unsubscribe();
+      if (unsubscribeChat) unsubscribeChat();
 
       const messagesRef = collection(db, "chats", currentRoom, "messages");
       const q = query(messagesRef, orderBy("timestamp", "asc"));
 
-      unsubscribe = onSnapshot(q, (snapshot) => {
+      unsubscribeChat = onSnapshot(q, (snapshot) => {
         document.getElementById('chat-box').innerHTML = '';
         snapshot.forEach((doc) => appendMessage(doc.data()));
       });
     }
 
     document.getElementById('btn-back').addEventListener('click', () => {
+      activePeer = null; // Выходим из чата
       document.getElementById('chat-screen').classList.remove('active');
       renderChatsList();
     });
@@ -352,8 +423,34 @@
       if (e.key === 'Enter') sendMessage();
     });
 
-    // --- ЛОГИКА ЗАГРУЗКИ АВАТАРКИ ФАЙЛОМ ---
-    
+    // --- ПРОСМОТР ЧУЖОГО ПРОФИЛЯ ПО КЛИКУ В ШАПКЕ ---
+    document.getElementById('btn-open-peer-profile').addEventListener('click', async () => {
+      if (!activePeer) return;
+
+      document.getElementById('peer-modal-username-text').innerText = `@${activePeer}`;
+      const uData = await loadUserData(activePeer);
+
+      const imgEl = document.getElementById('peer-modal-avatar-img');
+      const phEl = document.getElementById('peer-modal-avatar-ph');
+
+      if (uData && uData.avatarUrl) {
+        imgEl.src = uData.avatarUrl;
+        imgEl.style.display = 'block';
+        phEl.style.display = 'none';
+      } else {
+        phEl.innerText = activePeer[0].toUpperCase();
+        phEl.style.display = 'flex';
+        imgEl.style.display = 'none';
+      }
+
+      document.getElementById('peer-profile-modal').classList.add('active');
+    });
+
+    document.getElementById('btn-close-peer-profile').addEventListener('click', () => {
+      document.getElementById('peer-profile-modal').classList.remove('active');
+    });
+
+    // --- НАСТРОЙКИ СВОЕГО ПРОФИЛЯ ---
     document.getElementById('nav-profile').addEventListener('click', async () => {
       document.getElementById('profile-modal').classList.add('active');
       document.getElementById('profile-username-text').innerText = `@${currentUser}`;
@@ -388,24 +485,20 @@
       reader.onload = (event) => {
         const img = new Image();
         img.onload = () => {
-          // Сжимаем картинку до 200x200 пикселей прямо в браузере
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           const size = 200;
           canvas.width = size;
           canvas.height = size;
 
-          // Обрезаем по центру в квадрат
           const minDim = Math.min(img.width, img.height);
           const sx = (img.width - minDim) / 2;
           const sy = (img.height - minDim) / 2;
 
           ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
 
-          // Конвертируем в легкий JPEG
           const base64Url = canvas.toDataURL('image/jpeg', 0.8);
 
-          // Сохраняем в Firestore
           setDoc(doc(db, "users", currentUser), { avatarUrl: base64Url }, { merge: true }).then(() => {
             usersCache[currentUser] = { avatarUrl: base64Url };
             document.getElementById('profile-avatar-img').src = base64Url;
