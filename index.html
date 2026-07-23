@@ -19,9 +19,10 @@
       --msg-peer: #1e293b;
       --chat-bg-image: radial-gradient(#1e293b 1px, transparent 0);
       --chat-bg-color: #0b0e14;
+      --main-app-bg-image: none;
       --glass-bg: rgba(21, 29, 42, 0.75);
 
-      /* Динамические переменные для точной настройки стикеров */
+      /* Динамические переменные для стикеров */
       --sticker-max-size: 180px;
       --sticker-fit-mode: contain;
     }
@@ -44,18 +45,26 @@
     .auth-msg.info { color: #38bdf8; }
 
     /* Главный экран */
-    #main-screen { display: flex; flex-direction: column; height: 100%; width: 100%; }
+    #main-screen { 
+      display: flex; 
+      flex-direction: column; 
+      height: 100%; 
+      width: 100%; 
+      background-image: var(--main-app-bg-image); 
+      background-size: cover; 
+      background-position: center; 
+    }
 
     .app-header { background: var(--glass-bg); backdrop-filter: blur(12px); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border-color); flex-shrink: 0; z-index: 10; }
     .app-title { font-weight: 800; font-size: 20px; letter-spacing: -0.5px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-    .search-container { background: var(--bg-main); padding: 10px 16px; display: flex; gap: 10px; flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
+    .search-container { background: rgba(11, 14, 20, 0.6); backdrop-filter: blur(8px); padding: 10px 16px; display: flex; gap: 10px; flex-shrink: 0; border-bottom: 1px solid var(--border-color); }
     .search-container input { flex: 1; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 14px; outline: none; font-size: 14px; }
     .search-container button { padding: 0 18px; background: var(--accent-gradient); color: #fff; border: none; border-radius: 14px; font-weight: 700; font-size: 20px; cursor: pointer; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
 
-    #chats-list-vertical { flex: 1; overflow-y: auto; background: var(--bg-main); display: flex; flex-direction: column; padding: 6px 0; }
-    .chat-row { display: flex; align-items: center; padding: 12px 16px; gap: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s; }
-    .chat-row:active { background: rgba(255,255,255,0.05); }
+    #chats-list-vertical { flex: 1; overflow-y: auto; background: transparent; display: flex; flex-direction: column; padding: 6px 0; }
+    .chat-row { display: flex; align-items: center; padding: 12px 16px; gap: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); cursor: pointer; transition: background 0.2s; background: rgba(21, 29, 42, 0.4); margin: 2px 8px; border-radius: 14px; }
+    .chat-row:active { background: rgba(255,255,255,0.1); }
     .avatar { width: 50px; height: 50px; border-radius: 18px; background: var(--accent-gradient); display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; flex-shrink: 0; object-fit: cover; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     .chat-info { flex: 1; overflow: hidden; }
     .chat-name { font-weight: 700; font-size: 16px; color: var(--text-main); margin-bottom: 4px; }
@@ -72,9 +81,16 @@
     #chat-screen { position: fixed; inset: 0; background: var(--bg-main); z-index: 1000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
     #chat-screen.active { transform: translateX(0); }
 
-    .chat-header { background: var(--glass-bg); backdrop-filter: blur(16px); padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; z-index: 10; }
+    .chat-header { background: var(--glass-bg); backdrop-filter: blur(16px); padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; z-index: 10; position: relative; }
     .back-btn { background: none; border: none; color: #818cf8; font-size: 24px; cursor: pointer; padding-right: 4px; font-weight: bold; }
     .chat-header-user { display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; }
+    .chat-menu-btn { background: none; border: none; color: var(--text-main); font-size: 22px; cursor: pointer; padding: 4px 8px; font-weight: bold; }
+
+    /* Выпадающее меню чата (три точки) */
+    .chat-dropdown-menu { position: absolute; top: 60px; right: 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: none; flex-direction: column; z-index: 100; overflow: hidden; min-width: 200px; }
+    .chat-dropdown-menu.active { display: flex; }
+    .dropdown-item { padding: 12px 16px; background: transparent; border: none; color: var(--text-main); font-size: 14px; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: background 0.2s; }
+    .dropdown-item:hover, .dropdown-item:active { background: rgba(255,255,255,0.05); }
 
     #chat-box { 
       flex: 1; 
@@ -97,7 +113,14 @@
     .msg-wrapper.me .msg { background: var(--accent-gradient); color: #fff; border-bottom-right-radius: 4px; }
     .msg-wrapper.peer .msg { background: var(--msg-peer); color: #fff; border-bottom-left-radius: 4px; border: 1px solid var(--border-color); }
     
-    /* Улучшенная гибкая настройка стикеров без обрезки */
+    /* Карточка предложения смены обоев в чате */
+    .wallpaper-proposal-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 10px; max-width: 260px; box-shadow: 0 8px 20px rgba(0,0,0,0.4); }
+    .wallpaper-preview-img { width: 100%; height: 140px; object-fit: cover; border-radius: 10px; border: 1px solid var(--border-color); }
+    .proposal-btn-group { display: flex; gap: 8px; }
+    .proposal-btn { flex: 1; padding: 8px; border-radius: 10px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; text-align: center; }
+    .proposal-accept { background: #22c55e; color: #fff; }
+    .proposal-decline { background: rgba(255,255,255,0.1); color: var(--text-sub); }
+
     .msg.sticker-msg { background: transparent !important; padding: 0; box-shadow: none; border: none !important; }
     .msg-sticker-img { 
       max-width: var(--sticker-max-size); 
@@ -120,7 +143,7 @@
     .input-bar input { flex: 1; padding: 12px 18px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 24px; outline: none; font-size: 14px; }
     .input-bar button { background: var(--accent-gradient); border: none; width: 44px; height: 44px; border-radius: 50%; color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
 
-    /* Панель взаимодействия с сообщением */
+    /* Панели и Модалки */
     #msg-actions-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 3000; display: none; align-items: flex-end; justify-content: center; }
     #msg-actions-modal.active { display: flex; }
     .actions-sheet { background: var(--bg-card); border: 1px solid var(--border-color); border-top-left-radius: 24px; border-top-right-radius: 24px; width: 100%; max-width: 500px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); animation: slideUp 0.2s ease-out; }
@@ -128,12 +151,10 @@
     .action-btn { width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 14px; font-size: 15px; font-weight: 600; text-align: left; cursor: pointer; display: flex; align-items: center; gap: 10px; }
     .action-btn.danger { color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2); }
 
-    /* Панель редактирования */
     #edit-bar { background: var(--bg-card); border-top: 1px solid var(--border-color); padding: 8px 14px; display: none; align-items: center; justify-content: space-between; font-size: 13px; color: var(--accent-color); }
     #edit-bar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 80%; }
     #btn-cancel-edit { background: none; border: none; color: #ef4444; font-size: 16px; cursor: pointer; font-weight: bold; }
 
-    /* Выбор стикеров */
     #sticker-picker { background: var(--glass-bg); backdrop-filter: blur(16px); border-top: 1px solid var(--border-color); height: 240px; display: none; flex-direction: column; flex-shrink: 0; }
     #sticker-picker.active { display: flex; }
     .sticker-tabs { display: flex; gap: 8px; padding: 10px; overflow-x: auto; border-bottom: 1px solid var(--border-color); }
@@ -141,12 +162,10 @@
     .sticker-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px; }
     .sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; border-radius: 8px; }
 
-    /* Модальные окна */
     .modal-overlay { position: fixed; inset: 0; background: rgba(11, 14, 20, 0.85); backdrop-filter: blur(12px); z-index: 1500; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
     .modal-overlay.active { display: flex; }
     .profile-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; max-width: 440px; margin: auto; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
     
-    /* Табы категорий настроек */
     .settings-nav-tabs { display: flex; width: 100%; gap: 6px; overflow-x: auto; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
     .settings-tab-btn { flex: 1; padding: 8px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); color: var(--text-sub); border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; text-align: center; }
     .settings-tab-btn.active { background: var(--accent-gradient); color: #fff; border-color: transparent; }
@@ -177,6 +196,9 @@
     .account-item-row.active-acc { border-color: var(--accent-color); background: rgba(99, 102, 241, 0.1); }
 
     #error-box { position: fixed; top: 0; left: 0; right: 0; background: rgba(239, 68, 68, 0.95); color: white; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
+    
+    .checkbox-container { display: flex; align-items: center; gap: 10px; font-size: 13px; cursor: pointer; margin-top: 10px; color: var(--text-main); }
+    .checkbox-container input { width: 18px; height: 18px; accent-color: var(--accent-color); cursor: pointer; }
   </style>
 </head>
 <body>
@@ -229,6 +251,15 @@
           <div style="font-size:12px; color:#818cf8; font-weight:600;">online/offline в разработке</div>
         </div>
       </div>
+
+      <!-- Кнопка Три Точки -->
+      <button class="chat-menu-btn" id="btn-toggle-chat-menu">⋮</button>
+
+      <!-- Выпадающее меню настроек конкретного чата -->
+      <div class="chat-dropdown-menu" id="chat-dropdown-menu">
+        <button class="dropdown-item" id="btn-menu-change-wallpaper">🖼️ Сменить обои чата</button>
+        <button class="dropdown-item" id="btn-menu-reset-wallpaper" style="color:var(--text-sub);">🔄 Сбросить обои чата</button>
+      </div>
     </div>
 
     <div id="chat-box"></div>
@@ -250,6 +281,31 @@
     </div>
   </div>
 
+  <!-- Модалка смены обоев конкретного чата -->
+  <div id="chat-wallpaper-modal" class="modal-overlay">
+    <div class="profile-card">
+      <h3 style="font-size:18px; color:var(--text-main);">🖼️ Настройка обоев чата</h3>
+      <p style="font-size:12px; color:var(--text-sub); text-align:center;">Выберите фото с устройства для фона текущего чата.</p>
+
+      <button id="btn-select-chat-wallpaper" class="auth-btn" style="padding:10px; font-size:13px;">Выбрать фото 🏞️</button>
+      <input type="file" id="chat-wallpaper-file-input" accept="image/*" style="display:none;">
+
+      <div id="chat-wallpaper-preview-container" style="display:none; width:100%; flex-direction:column; gap:10px;">
+        <img id="chat-wallpaper-preview-img" style="width:100%; height:160px; object-fit:cover; border-radius:14px; border:1px solid var(--border-color);">
+        
+        <label class="checkbox-container">
+          <input type="checkbox" id="propose-wallpaper-checkbox" checked>
+          <span>Предложить собеседнику поставить эти обои</span>
+        </label>
+      </div>
+
+      <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
+        <button id="btn-cancel-chat-wallpaper" class="auth-btn" style="background:rgba(255,255,255,0.05); color:var(--text-sub); flex:1; padding:10px; font-size:13px;">Отмена</button>
+        <button id="btn-apply-chat-wallpaper" class="auth-btn" style="display:none; flex:1; padding:10px; font-size:13px;">Применить 🚀</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Меню действия над сообщением -->
   <div id="msg-actions-modal">
     <div class="actions-sheet">
@@ -259,7 +315,7 @@
     </div>
   </div>
 
-  <!-- Настройки с Категориями -->
+  <!-- Настройки приложения -->
   <div id="profile-modal" class="modal-overlay">
     <div class="app-header" style="background:transparent; border:none; padding:0 0 12px 0;">
       <div class="app-title">Настройки</div>
@@ -267,8 +323,6 @@
     </div>
 
     <div class="profile-card">
-      
-      <!-- Вкладки категорий -->
       <div class="settings-nav-tabs">
         <button class="settings-tab-btn active" onclick="switchSettingsTab('acc-tab', this)">👤 Аккаунт</button>
         <button class="settings-tab-btn" onclick="switchSettingsTab('theme-tab', this)">🎨 Внешний вид</button>
@@ -337,15 +391,16 @@
           <div class="presets-container" id="presets-list"></div>
         </div>
 
+        <!-- Обои Главного Экрана -->
         <div class="custom-section">
-          <h4>🖼️ Обои в чате</h4>
-          <button id="btn-bg-file" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 8px; padding:10px; font-size:13px;">Загрузить свое фото 🏞️</button>
-          <button onclick="resetChatWallpaper()" class="auth-btn" style="background: transparent; color: var(--text-sub); font-size: 12px; padding: 4px;">Сбросить обои</button>
-          <input type="file" id="bg-file-input" accept="image/*" style="display:none;">
+          <h4>📱 Обои общего фона (Главный экран)</h4>
+          <button id="btn-main-bg-file" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 8px; padding:10px; font-size:13px;">Загрузить фото для приложения 🖼️</button>
+          <button onclick="resetMainWallpaper()" class="auth-btn" style="background: transparent; color: var(--text-sub); font-size: 12px; padding: 4px;">Сбросить фон приложения</button>
+          <input type="file" id="main-bg-file-input" accept="image/*" style="display:none;">
         </div>
       </div>
 
-      <!-- Вкладка 3: Стикеры и скриншоты -->
+      <!-- Вкладка 3: Стикеры -->
       <div id="stickers-tab" class="settings-tab-content">
         <div class="custom-section">
           <h4>📐 Отображение стикеров</h4>
@@ -372,7 +427,7 @@
         </div>
       </div>
 
-      <!-- Вкладка 4: Уведомления / Разное -->
+      <!-- Вкладка 4: Разное -->
       <div id="notif-tab" class="settings-tab-content">
         <div class="custom-section">
           <h4>🔔 Уведомления</h4>
@@ -383,7 +438,7 @@
     </div>
   </div>
 
-  <!-- Модалка чужого профиля -->
+  <!-- Модалка профиля собеседника -->
   <div id="peer-profile-modal" class="modal-overlay">
     <div class="app-header" style="background:transparent; border:none; padding:0 0 16px 0;">
       <div class="app-title">Профиль</div>
@@ -436,14 +491,20 @@
 
     let myStickerPacks = JSON.parse(localStorage.getItem("larp_my_sticker_packs") || "[]");
     let newPackStickersTemp = [];
+    let tempChatWallpaperBase64 = null;
 
-    // Инициализация кастомных настроек стикеров
+    // Настройки стикеров
     const savedStickerSize = localStorage.getItem("larp_sticker_size") || "180px";
     const savedStickerFit = localStorage.getItem("larp_sticker_fit") || "contain";
     document.documentElement.style.setProperty('--sticker-max-size', savedStickerSize);
     document.documentElement.style.setProperty('--sticker-fit-mode', savedStickerFit);
 
-    // Переключение вкладок в настройках
+    // Загрузка главного фона приложения
+    const savedMainBg = localStorage.getItem("larp_main_app_bg");
+    if (savedMainBg) {
+      document.documentElement.style.setProperty('--main-app-bg-image', `url(${savedMainBg})`);
+    }
+
     window.switchSettingsTab = function(tabId, btn) {
       document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
@@ -474,7 +535,6 @@
       document.documentElement.style.setProperty('--msg-peer', adjustBrightness(bgColor, 20));
       document.documentElement.style.setProperty('--border-color', 'rgba(255,255,255,0.08)');
       document.documentElement.style.setProperty('--chat-bg-color', bgColor);
-      document.documentElement.style.setProperty('--chat-bg-image', 'none');
 
       const pickerAccent = document.getElementById('picker-accent');
       const pickerBg = document.getElementById('picker-bg');
@@ -506,9 +566,6 @@
         applyCustomColors(t.accent, t.bg);
         localStorage.setItem("larp_current_theme", themeName);
       }
-
-      const savedBg = localStorage.getItem("larp_custom_bg");
-      if (savedBg) document.documentElement.style.setProperty('--chat-bg-image', `url(${savedBg})`);
     };
 
     document.getElementById('btn-save-preset').addEventListener('click', () => {
@@ -553,10 +610,11 @@
     applyTheme(localStorage.getItem("larp_current_theme") || "default");
     renderSavedPresets();
 
-    const bgFileInput = document.getElementById('bg-file-input');
-    document.getElementById('btn-bg-file').addEventListener('click', () => bgFileInput.click());
+    // Загрузка главного фона приложения (не в чате)
+    const mainBgFileInput = document.getElementById('main-bg-file-input');
+    document.getElementById('btn-main-bg-file').addEventListener('click', () => mainBgFileInput.click());
 
-    bgFileInput.addEventListener('change', (e) => {
+    mainBgFileInput.addEventListener('change', (e) => {
       const file = e.target.files[0];
       if (!file) return;
 
@@ -572,19 +630,120 @@
           canvas.height = img.height * scale;
 
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          const base64Url = canvas.toDataURL('image/jpeg', 0.7);
+          const base64Url = canvas.toDataURL('image/jpeg', 0.75);
 
-          localStorage.setItem("larp_custom_bg", base64Url);
-          document.documentElement.style.setProperty('--chat-bg-image', `url(${base64Url})`);
+          localStorage.setItem("larp_main_app_bg", base64Url);
+          document.documentElement.style.setProperty('--main-app-bg-image', `url(${base64Url})`);
         };
         img.src = event.target.result;
       };
       reader.readAsDataURL(file);
     });
 
-    window.resetChatWallpaper = function() {
-      localStorage.removeItem("larp_custom_bg");
-      applyTheme(localStorage.getItem("larp_current_theme") || "default");
+    window.resetMainWallpaper = function() {
+      localStorage.removeItem("larp_main_app_bg");
+      document.documentElement.style.setProperty('--main-app-bg-image', 'none');
+    };
+
+    // ---------------- ЛОГИКА ОБОЕВ ДЛЯ КОНКРЕТНОГО ЧАТА ---------------- //
+
+    document.getElementById('btn-toggle-chat-menu').addEventListener('click', (e) => {
+      e.stopPropagation();
+      document.getElementById('chat-dropdown-menu').classList.toggle('active');
+    });
+
+    document.addEventListener('click', () => {
+      document.getElementById('chat-dropdown-menu').classList.remove('active');
+    });
+
+    document.getElementById('btn-menu-change-wallpaper').addEventListener('click', () => {
+      document.getElementById('chat-dropdown-menu').classList.remove('active');
+      document.getElementById('chat-wallpaper-preview-container').style.display = 'none';
+      document.getElementById('btn-apply-chat-wallpaper').style.display = 'none';
+      tempChatWallpaperBase64 = null;
+      document.getElementById('chat-wallpaper-modal').classList.add('active');
+    });
+
+    document.getElementById('btn-cancel-chat-wallpaper').addEventListener('click', () => {
+      document.getElementById('chat-wallpaper-modal').classList.remove('active');
+    });
+
+    const chatWallpaperInput = document.getElementById('chat-wallpaper-file-input');
+    document.getElementById('btn-select-chat-wallpaper').addEventListener('click', () => chatWallpaperInput.click());
+
+    chatWallpaperInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const maxWidth = 1080;
+          const scale = maxWidth / img.width;
+          canvas.width = maxWidth;
+          canvas.height = img.height * scale;
+
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          tempChatWallpaperBase64 = canvas.toDataURL('image/jpeg', 0.75);
+
+          document.getElementById('chat-wallpaper-preview-img').src = tempChatWallpaperBase64;
+          document.getElementById('chat-wallpaper-preview-container').style.display = 'flex';
+          document.getElementById('btn-apply-chat-wallpaper').style.display = 'block';
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('btn-apply-chat-wallpaper').addEventListener('click', async () => {
+      if (!tempChatWallpaperBase64 || !currentRoom) return;
+
+      const shouldPropose = document.getElementById('propose-wallpaper-checkbox').checked;
+
+      // Локально устанавливаем себе
+      setRoomWallpaper(currentRoom, tempChatWallpaperBase64);
+
+      if (shouldPropose) {
+        // Отправляем предложение собеседнику в чат
+        await addDoc(collection(db, "chats", currentRoom, "messages"), {
+          type: "wallpaper_proposal",
+          wallpaperUrl: tempChatWallpaperBase64,
+          author: currentUser,
+          timestamp: serverTimestamp()
+        });
+      }
+
+      document.getElementById('chat-wallpaper-modal').classList.remove('active');
+    });
+
+    document.getElementById('btn-menu-reset-wallpaper').addEventListener('click', () => {
+      if (!currentRoom) return;
+      localStorage.removeItem(`larp_room_bg_${currentRoom}`);
+      applyRoomWallpaper(currentRoom);
+      document.getElementById('chat-dropdown-menu').classList.remove('active');
+    });
+
+    function setRoomWallpaper(roomId, base64Url) {
+      localStorage.setItem(`larp_room_bg_${roomId}`, base64Url);
+      applyRoomWallpaper(roomId);
+    }
+
+    function applyRoomWallpaper(roomId) {
+      const bg = localStorage.getItem(`larp_room_bg_${roomId}`);
+      if (bg) {
+        document.documentElement.style.setProperty('--chat-bg-image', `url(${bg})`);
+      } else {
+        document.documentElement.style.setProperty('--chat-bg-image', 'radial-gradient(#1e293b 1px, transparent 0)');
+      }
+    }
+
+    window.acceptWallpaperProposal = function(msgId, wallpaperUrl) {
+      if (!currentRoom) return;
+      setRoomWallpaper(currentRoom, wallpaperUrl);
+      alert("Обои приняты и установлены в этом чате!");
     };
 
     // ----------------- УВЕДОМЛЕНИЯ ----------------- //
@@ -933,6 +1092,8 @@
       }
 
       currentRoom = getPrivateChatId(currentUser, targetUser);
+      applyRoomWallpaper(currentRoom);
+
       document.getElementById('chat-peer-title').innerText = `@${targetUser}`;
 
       const uData = await loadUserData(targetUser);
@@ -979,7 +1140,7 @@
       document.getElementById('msg-actions-modal').classList.add('active');
 
       const editBtn = document.getElementById('btn-action-edit');
-      editBtn.style.display = data.type === 'sticker' ? 'none' : 'flex';
+      editBtn.style.display = (data.type === 'sticker' || data.type === 'wallpaper_proposal') ? 'none' : 'flex';
     }
 
     document.getElementById('btn-action-cancel').addEventListener('click', () => {
@@ -1057,7 +1218,21 @@
         timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
-      if (data.type === "sticker") {
+      if (data.type === "wallpaper_proposal") {
+        wrapper.innerHTML = `
+          <div class="wallpaper-proposal-card">
+            <div style="font-size:12px; font-weight:bold; color:var(--text-main);">
+              ${isMe ? 'Вы предложили обои:' : `@${data.author} предлагает установить обои:`}
+            </div>
+            <img src="${data.wallpaperUrl}" class="wallpaper-preview-img">
+            ${!isMe ? `
+              <div class="proposal-btn-group">
+                <button class="proposal-btn proposal-accept" onclick="acceptWallpaperProposal('${msgId}', '${data.wallpaperUrl}')">Принять</button>
+              </div>
+            ` : '<div style="font-size:11px; color:var(--text-sub); text-align:center;">Предложение отправлено</div>'}
+          </div>
+        `;
+      } else if (data.type === "sticker") {
         wrapper.innerHTML = `
           <div class="msg sticker-msg">
             <img src="${data.stickerUrl}" class="msg-sticker-img">
@@ -1161,7 +1336,6 @@
       }
     }
 
-    // Сохранение пропорций при загрузке новых стикеров / скриншотов
     const stickerFilesInput = document.getElementById('sticker-files-input');
     document.getElementById('btn-add-sticker-imgs').addEventListener('click', () => stickerFilesInput.click());
 
@@ -1179,7 +1353,6 @@
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             
-            // Динамическое сжатие без обрезки по краям
             const maxDimension = 600;
             let width = img.width;
             let height = img.height;
@@ -1251,7 +1424,6 @@
       btn.disabled = false;
     });
 
-    // Ползунки и контроллеры точной настройки стикеров
     const stickerSizeSlider = document.getElementById('sticker-size-slider');
     const stickerSizeLabel = document.getElementById('sticker-size-label');
     const stickerFitSelect = document.getElementById('sticker-fit-select');
