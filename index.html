@@ -20,6 +20,10 @@
       --chat-bg-image: radial-gradient(#1e293b 1px, transparent 0);
       --chat-bg-color: #0b0e14;
       --glass-bg: rgba(21, 29, 42, 0.75);
+
+      /* Динамические переменные для точной настройки стикеров */
+      --sticker-max-size: 180px;
+      --sticker-fit-mode: contain;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -93,8 +97,19 @@
     .msg-wrapper.me .msg { background: var(--accent-gradient); color: #fff; border-bottom-right-radius: 4px; }
     .msg-wrapper.peer .msg { background: var(--msg-peer); color: #fff; border-bottom-left-radius: 4px; border: 1px solid var(--border-color); }
     
+    /* Улучшенная гибкая настройка стикеров без обрезки */
     .msg.sticker-msg { background: transparent !important; padding: 0; box-shadow: none; border: none !important; }
-    .msg-sticker-img { width: 150px; height: 150px; object-fit: contain; cursor: pointer; transition: transform 0.15s; }
+    .msg-sticker-img { 
+      max-width: var(--sticker-max-size); 
+      max-height: var(--sticker-max-size); 
+      width: auto;
+      height: auto;
+      object-fit: var(--sticker-fit-mode); 
+      border-radius: 12px;
+      cursor: pointer; 
+      transition: transform 0.15s; 
+      display: block;
+    }
     .msg-sticker-img:active { transform: scale(0.95); }
     
     .msg-meta { display: flex; align-items: center; gap: 4px; float: right; margin-left: 10px; margin-top: 4px; }
@@ -124,7 +139,7 @@
     .sticker-tabs { display: flex; gap: 8px; padding: 10px; overflow-x: auto; border-bottom: 1px solid var(--border-color); }
     .sticker-tab { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 14px; font-weight: bold; border: 1px solid var(--border-color); }
     .sticker-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 12px; }
-    .sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; }
+    .sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; border-radius: 8px; }
 
     /* Модальные окна */
     .modal-overlay { position: fixed; inset: 0; background: rgba(11, 14, 20, 0.85); backdrop-filter: blur(12px); z-index: 1500; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
@@ -156,7 +171,7 @@
     .preset-pill { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 14px; border-radius: 12px; font-size: 13px; cursor: pointer; font-weight: 500; }
 
     .sticker-create-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: 10px; }
-    .sticker-preview-item { width: 100%; aspect-ratio: 1; border-radius: 12px; background: var(--bg-main); object-fit: cover; }
+    .sticker-preview-item { width: 100%; aspect-ratio: 1; border-radius: 12px; background: var(--bg-main); object-fit: contain; }
 
     .account-item-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; margin-bottom: 6px; }
     .account-item-row.active-acc { border-color: var(--accent-color); background: rgba(99, 102, 241, 0.1); }
@@ -330,12 +345,27 @@
         </div>
       </div>
 
-      <!-- Вкладка 3: Стикеры -->
+      <!-- Вкладка 3: Стикеры и скриншоты -->
       <div id="stickers-tab" class="settings-tab-content">
+        <div class="custom-section">
+          <h4>📐 Отображение стикеров</h4>
+          <div style="font-size:13px; color:var(--text-sub); margin-bottom:8px;">
+            Размер: <span id="sticker-size-label" style="color:var(--text-main); font-weight:bold;">180px</span>
+          </div>
+          <input type="range" id="sticker-size-slider" min="100" max="350" value="180" style="width:100%; margin-bottom:12px; cursor:pointer;">
+          
+          <div style="font-size:13px; color:var(--text-sub); margin-bottom:6px;">Режим подгонки картинок:</div>
+          <select id="sticker-fit-select" class="auth-input" style="margin-bottom:12px; cursor:pointer;">
+            <option value="contain">Без обрезки (для скриншотов / подгонка)</option>
+            <option value="cover">Заполнить (квадрат с обрезкой)</option>
+            <option value="fill">Растянуть</option>
+          </select>
+        </div>
+
         <div class="custom-section">
           <h4>✨ Создать свой стикерпак</h4>
           <input type="text" id="pack-title-input" class="auth-input" placeholder="Название пака..." style="margin-bottom:10px;">
-          <button id="btn-add-sticker-imgs" class="auth-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); margin-bottom:8px; padding:10px; font-size:13px;">Добавить стикеры 🖼️</button>
+          <button id="btn-add-sticker-imgs" class="auth-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); margin-bottom:8px; padding:10px; font-size:13px;">Добавить стикеры / скриншоты 🖼️</button>
           <input type="file" id="sticker-files-input" accept="image/*" multiple style="display:none;">
           <div class="sticker-create-grid" id="sticker-create-preview"></div>
           <button id="btn-save-sticker-pack" class="auth-btn" style="margin-top:10px; display:none; padding:10px; font-size:13px;">Опубликовать стикерпак 🚀</button>
@@ -399,15 +429,19 @@
     let chatListeners = {};
     let unreadCounts = {};
     
-    // Чаты теперь строго уникальны для каждого аккаунта
     let myChats = [];
-
     let usersCache = {};
     let selectedMsgData = null;
     let editingMsgId = null;
 
     let myStickerPacks = JSON.parse(localStorage.getItem("larp_my_sticker_packs") || "[]");
     let newPackStickersTemp = [];
+
+    // Инициализация кастомных настроек стикеров
+    const savedStickerSize = localStorage.getItem("larp_sticker_size") || "180px";
+    const savedStickerFit = localStorage.getItem("larp_sticker_fit") || "contain";
+    document.documentElement.style.setProperty('--sticker-max-size', savedStickerSize);
+    document.documentElement.style.setProperty('--sticker-fit-mode', savedStickerFit);
 
     // Переключение вкладок в настройках
     window.switchSettingsTab = function(tabId, btn) {
@@ -654,7 +688,6 @@
         const userSnap = await getDoc(doc(db, "users", username));
 
         if (!userSnap.exists()) {
-          // Аккаунта нет -> Регистрация
           authState = 'REGISTER';
           currentAuthUser = username;
           usernameInput.disabled = true;
@@ -668,7 +701,6 @@
           currentAuthUser = username;
 
           if (userData.passwordHash) {
-            // Обычный вход
             authState = 'LOGIN';
             usernameInput.disabled = true;
             passwordInput.style.display = 'block';
@@ -677,7 +709,6 @@
             authBtn.innerText = 'Войти';
             showAuthMsg('');
           } else {
-            // Старый аккаунт БЕЗ пароля -> Заставляем установить пароль!
             authState = 'REGISTER';
             usernameInput.disabled = true;
             passwordInput.style.display = 'block';
@@ -743,7 +774,6 @@
       }
     });
 
-    // Установка/смена пароля с проверкой СТАРОГО пароля
     document.getElementById('btn-save-password').addEventListener('click', async () => {
       const oldPass = document.getElementById('settings-old-password').value.trim();
       const newPass = document.getElementById('settings-new-password').value.trim();
@@ -753,7 +783,6 @@
       const userSnap = await getDoc(doc(db, "users", currentUser));
       const userData = userSnap.data();
 
-      // Если пароль уже был -> требуем старый
       if (userData && userData.passwordHash) {
         if (!oldPass) return alert("Введите старый пароль!");
         const oldHashed = await hashPassword(oldPass);
@@ -778,14 +807,12 @@
       listenToAllChatsUnread();
     }
 
-    // Загрузка списков чатов конкретного аккаунта из Firebase
     async function loadMyChatsFromCloud() {
       try {
         const uSnap = await getDoc(doc(db, "users", currentUser));
         if (uSnap.exists() && uSnap.data().chats) {
           myChats = uSnap.data().chats;
         } else {
-          // Резерв локально по ключу юзера
           myChats = JSON.parse(localStorage.getItem(`larp_chats_${currentUser}`) || "[]");
         }
       } catch(e) {
@@ -1034,7 +1061,7 @@
         wrapper.innerHTML = `
           <div class="msg sticker-msg">
             <img src="${data.stickerUrl}" class="msg-sticker-img">
-            <div class="msg-meta" style="background:rgba(0,0,0,0.4); padding:2px 6px; border-radius:8px;">
+            <div class="msg-meta" style="background:rgba(0,0,0,0.5); padding:2px 6px; border-radius:8px; backdrop-filter:blur(4px);">
               <span class="msg-time">${timeStr}</span>
             </div>
           </div>
@@ -1134,6 +1161,7 @@
       }
     }
 
+    // Сохранение пропорций при загрузке новых стикеров / скриншотов
     const stickerFilesInput = document.getElementById('sticker-files-input');
     document.getElementById('btn-add-sticker-imgs').addEventListener('click', () => stickerFilesInput.click());
 
@@ -1150,16 +1178,29 @@
           img.onload = () => {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            const size = 180;
-            canvas.width = size;
-            canvas.height = size;
+            
+            // Динамическое сжатие без обрезки по краям
+            const maxDimension = 600;
+            let width = img.width;
+            let height = img.height;
 
-            const minDim = Math.min(img.width, img.height);
-            const sx = (img.width - minDim) / 2;
-            const sy = (img.height - minDim) / 2;
+            if (width > height) {
+              if (width > maxDimension) {
+                height *= maxDimension / width;
+                width = maxDimension;
+              }
+            } else {
+              if (height > maxDimension) {
+                width *= maxDimension / height;
+                height = maxDimension;
+              }
+            }
 
-            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
-            const base64Url = canvas.toDataURL('image/png');
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const base64Url = canvas.toDataURL('image/png', 0.85);
 
             newPackStickersTemp.push(base64Url);
 
@@ -1210,6 +1251,32 @@
       btn.disabled = false;
     });
 
+    // Ползунки и контроллеры точной настройки стикеров
+    const stickerSizeSlider = document.getElementById('sticker-size-slider');
+    const stickerSizeLabel = document.getElementById('sticker-size-label');
+    const stickerFitSelect = document.getElementById('sticker-fit-select');
+
+    if (stickerSizeSlider) {
+      stickerSizeSlider.value = parseInt(savedStickerSize);
+      if (stickerSizeLabel) stickerSizeLabel.innerText = savedStickerSize;
+
+      stickerSizeSlider.addEventListener('input', (e) => {
+        const val = e.target.value + 'px';
+        if (stickerSizeLabel) stickerSizeLabel.innerText = val;
+        document.documentElement.style.setProperty('--sticker-max-size', val);
+        localStorage.setItem("larp_sticker_size", val);
+      });
+    }
+
+    if (stickerFitSelect) {
+      stickerFitSelect.value = savedStickerFit;
+      stickerFitSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        document.documentElement.style.setProperty('--sticker-fit-mode', val);
+        localStorage.setItem("larp_sticker_fit", val);
+      });
+    }
+
     // Профиль чужого юзера
     document.getElementById('btn-open-peer-profile').addEventListener('click', async () => {
       if (!activePeer) return;
@@ -1247,7 +1314,6 @@
       const userSnap = await getDoc(doc(db, "users", currentUser));
       const myData = userSnap.data();
 
-      // Настройка видимости поля старого пароля
       const oldPassInput = document.getElementById('settings-old-password');
       if (myData && myData.passwordHash) {
         oldPassInput.style.display = 'block';
