@@ -129,14 +129,22 @@
     /* Модальные окна */
     .modal-overlay { position: fixed; inset: 0; background: rgba(11, 14, 20, 0.85); backdrop-filter: blur(12px); z-index: 1500; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
     .modal-overlay.active { display: flex; }
-    .profile-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 18px; align-items: center; width: 100%; max-width: 420px; margin: auto; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
+    .profile-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 20px; display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; max-width: 440px; margin: auto; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
     
+    /* Табы категорий настроек */
+    .settings-nav-tabs { display: flex; width: 100%; gap: 6px; overflow-x: auto; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+    .settings-tab-btn { flex: 1; padding: 8px 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-color); color: var(--text-sub); border-radius: 12px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; text-align: center; }
+    .settings-tab-btn.active { background: var(--accent-gradient); color: #fff; border-color: transparent; }
+
+    .settings-tab-content { width: 100%; display: none; flex-direction: column; gap: 16px; }
+    .settings-tab-content.active { display: flex; }
+
     .avatar-upload-wrapper { position: relative; cursor: pointer; }
     .avatar-upload-wrapper:hover::after { content: '📷'; position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
-    .profile-avatar-preview { width: 110px; height: 110px; border-radius: 28px; background: var(--accent-gradient); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .profile-avatar-preview { width: 100px; height: 100px; border-radius: 28px; background: var(--accent-gradient); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
 
     .custom-section { width: 100%; text-align: left; }
-    .custom-section h4 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-sub); margin-bottom: 12px; border-bottom: 1px solid var(--border-color); padding-bottom: 6px; }
+    .custom-section h4 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-sub); margin-bottom: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
     
     .theme-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; width: 100%; }
     .theme-circle { width: 100%; aspect-ratio: 1; border-radius: 16px; cursor: pointer; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; }
@@ -150,7 +158,6 @@
     .sticker-create-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: 10px; }
     .sticker-preview-item { width: 100%; aspect-ratio: 1; border-radius: 12px; background: var(--bg-main); object-fit: cover; }
 
-    /* Элементы списка аккаунтов */
     .account-item-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; margin-bottom: 6px; }
     .account-item-row.active-acc { border-color: var(--accent-color); background: rgba(99, 102, 241, 0.1); }
 
@@ -211,7 +218,6 @@
 
     <div id="chat-box"></div>
 
-    <!-- Индикатор редактирования -->
     <div id="edit-bar">
       <span>✏️ Редактирование: <i id="edit-preview-text"></i></span>
       <button id="btn-cancel-edit">✕</button>
@@ -223,7 +229,6 @@
       <button id="btn-send">➔</button>
     </div>
 
-    <!-- Панель выбора стикеров -->
     <div id="sticker-picker">
       <div class="sticker-tabs" id="sticker-tabs"></div>
       <div class="sticker-grid" id="sticker-grid"></div>
@@ -239,94 +244,110 @@
     </div>
   </div>
 
-  <!-- Настройки -->
+  <!-- Настройки с Категориями -->
   <div id="profile-modal" class="modal-overlay">
-    <div class="app-header" style="background:transparent; border:none; padding:0 0 16px 0;">
+    <div class="app-header" style="background:transparent; border:none; padding:0 0 12px 0;">
       <div class="app-title">Настройки</div>
       <button id="btn-close-profile" style="background:none; border:none; color:var(--accent-color); font-size:16px; font-weight:bold;">Готово</button>
     </div>
-    
+
     <div class="profile-card">
-      <div class="avatar-upload-wrapper" id="btn-trigger-file">
-        <div id="profile-avatar-ph" class="profile-avatar-preview">?</div>
-        <img id="profile-avatar-img" class="profile-avatar-preview" style="display:none;">
-      </div>
-      <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
-      <p id="profile-username-text" style="font-weight:700; font-size:20px; color:var(--text-main);"></p>
-      <button id="btn-choose-file" class="auth-btn">Сменить фото профиля 📷</button>
-      <p id="upload-status" style="font-size:12px; color:var(--text-sub); display:none;">Обработка...</p>
-
-      <!-- МУЛЬТИ-АККАУНТ -->
-      <div class="custom-section">
-        <h4>👥 Мои аккаунты</h4>
-        <div id="accounts-list-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
-        <button id="btn-add-account" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main);">➕ Добавить аккаунт</button>
+      
+      <!-- Вкладки категорий -->
+      <div class="settings-nav-tabs">
+        <button class="settings-tab-btn active" onclick="switchSettingsTab('acc-tab', this)">👤 Аккаунт</button>
+        <button class="settings-tab-btn" onclick="switchSettingsTab('theme-tab', this)">🎨 Внешний вид</button>
+        <button class="settings-tab-btn" onclick="switchSettingsTab('stickers-tab', this)">✨ Стикеры</button>
+        <button class="settings-tab-btn" onclick="switchSettingsTab('notif-tab', this)">🔔 Разное</button>
       </div>
 
-      <!-- УВЕДОМЛЕНИЯ -->
-      <div class="custom-section">
-        <h4>🔔 Уведомления</h4>
-        <button id="btn-enable-notifications" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main);">Включить уведомления 🔔</button>
-      </div>
+      <!-- Вкладка 1: Аккаунт -->
+      <div id="acc-tab" class="settings-tab-content active">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+          <div class="avatar-upload-wrapper" id="btn-trigger-file">
+            <div id="profile-avatar-ph" class="profile-avatar-preview">?</div>
+            <img id="profile-avatar-img" class="profile-avatar-preview" style="display:none;">
+          </div>
+          <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+          <p id="profile-username-text" style="font-weight:700; font-size:20px; color:var(--text-main);"></p>
+          <button id="btn-choose-file" class="auth-btn" style="padding:10px; font-size:13px;">Сменить фото профиля 📷</button>
+          <p id="upload-status" style="font-size:12px; color:var(--text-sub); display:none;">Обработка...</p>
+        </div>
 
-      <!-- БЕЗОПАСНОСТЬ И ПАРОЛЬ -->
-      <div class="custom-section">
-        <h4>🔐 Пароль</h4>
-        <input type="password" id="settings-new-password" class="auth-input" placeholder="Установить / сменить пароль" style="margin-bottom:8px;">
-        <button id="btn-save-password" class="auth-btn" style="padding:10px;">Сохранить пароль 💾</button>
-      </div>
+        <div class="custom-section">
+          <h4>👥 Мои аккаунты</h4>
+          <div id="accounts-list-container" style="display:flex; flex-direction:column; gap:6px; margin-bottom:10px;"></div>
+          <button id="btn-add-account" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding:10px; font-size:13px;">➕ Добавить аккаунт</button>
+        </div>
 
-      <!-- СОЗДАНИЕ СТИКЕРПАКА -->
-      <div class="custom-section">
-        <h4>✨ Создать свой стикерпак</h4>
-        <input type="text" id="pack-title-input" class="auth-input" placeholder="Название пака..." style="margin-bottom:10px;">
-        <button id="btn-add-sticker-imgs" class="auth-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); margin-bottom:8px;">Добавить стикеры 🖼️</button>
-        <input type="file" id="sticker-files-input" accept="image/*" multiple style="display:none;">
-        <div class="sticker-create-grid" id="sticker-create-preview"></div>
-        <button id="btn-save-sticker-pack" class="auth-btn" style="margin-top:10px; display:none;">Опубликовать стикерпак 🚀</button>
-      </div>
+        <div class="custom-section">
+          <h4>🔐 Безопасность и пароль</h4>
+          <input type="password" id="settings-old-password" class="auth-input" placeholder="Старый пароль" style="margin-bottom:8px; display:none;">
+          <input type="password" id="settings-new-password" class="auth-input" placeholder="Новый пароль" style="margin-bottom:8px;">
+          <button id="btn-save-password" class="auth-btn" style="padding:10px; font-size:13px;">Сохранить пароль 💾</button>
+        </div>
 
-      <!-- ТЕМЫ -->
-      <div class="custom-section">
-        <h4>🎨 Готовые темы</h4>
-        <div class="theme-grid">
-          <div class="theme-circle" style="background: #1e1b4b; color:#818cf8;" onclick="applyTheme('default')">Dark</div>
-          <div class="theme-circle" style="background: #0f172a; color:#38bdf8;" onclick="applyTheme('midnight')">Blue</div>
-          <div class="theme-circle" style="background: #18181b; color:#a855f7;" onclick="applyTheme('cyberpunk')">Purple</div>
-          <div class="theme-circle" style="background: #064e3b; color:#22c55e;" onclick="applyTheme('forest')">Forest</div>
+        <div class="custom-section" style="margin-top: 4px;">
+          <button id="btn-logout-settings" class="auth-btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444; padding:10px; font-size:13px;">🚪 Выйти из этого аккаунта</button>
         </div>
       </div>
 
-      <!-- КОНСТРУКТОР ЦВЕТОВ -->
-      <div class="custom-section">
-        <h4>🛠️ Свои цвета</h4>
-        <div class="color-picker-row">
-          <span>Цвет 1 (Акцент):</span>
-          <input type="color" id="picker-accent" value="#6366f1">
+      <!-- Вкладка 2: Внешний вид -->
+      <div id="theme-tab" class="settings-tab-content">
+        <div class="custom-section">
+          <h4>🎨 Готовые темы</h4>
+          <div class="theme-grid">
+            <div class="theme-circle" style="background: #1e1b4b; color:#818cf8;" onclick="applyTheme('default')">Dark</div>
+            <div class="theme-circle" style="background: #0f172a; color:#38bdf8;" onclick="applyTheme('midnight')">Blue</div>
+            <div class="theme-circle" style="background: #18181b; color:#a855f7;" onclick="applyTheme('cyberpunk')">Purple</div>
+            <div class="theme-circle" style="background: #064e3b; color:#22c55e;" onclick="applyTheme('forest')">Forest</div>
+          </div>
         </div>
-        <div class="color-picker-row">
-          <span>Цвет 2 (Фон):</span>
-          <input type="color" id="picker-bg" value="#0b0e14">
+
+        <div class="custom-section">
+          <h4>🛠️ Свои цвета</h4>
+          <div class="color-picker-row">
+            <span>Цвет 1 (Акцент):</span>
+            <input type="color" id="picker-accent" value="#6366f1">
+          </div>
+          <div class="color-picker-row">
+            <span>Цвет 2 (Фон):</span>
+            <input type="color" id="picker-bg" value="#0b0e14">
+          </div>
+          <button id="btn-save-preset" class="auth-btn" style="margin-top: 6px; font-size: 13px; padding: 10px;">Сохранить пресет 💾</button>
         </div>
-        <button id="btn-save-preset" class="auth-btn" style="margin-top: 6px; font-size: 13px; padding: 10px;">Сохранить пресет 💾</button>
+
+        <div class="custom-section" id="saved-presets-section" style="display:none;">
+          <h4>📂 Ваши темы</h4>
+          <div class="presets-container" id="presets-list"></div>
+        </div>
+
+        <div class="custom-section">
+          <h4>🖼️ Обои в чате</h4>
+          <button id="btn-bg-file" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 8px; padding:10px; font-size:13px;">Загрузить свое фото 🏞️</button>
+          <button onclick="resetChatWallpaper()" class="auth-btn" style="background: transparent; color: var(--text-sub); font-size: 12px; padding: 4px;">Сбросить обои</button>
+          <input type="file" id="bg-file-input" accept="image/*" style="display:none;">
+        </div>
       </div>
 
-      <div class="custom-section" id="saved-presets-section" style="display:none;">
-        <h4>📂 Ваши темы</h4>
-        <div class="presets-container" id="presets-list"></div>
+      <!-- Вкладка 3: Стикеры -->
+      <div id="stickers-tab" class="settings-tab-content">
+        <div class="custom-section">
+          <h4>✨ Создать свой стикерпак</h4>
+          <input type="text" id="pack-title-input" class="auth-input" placeholder="Название пака..." style="margin-bottom:10px;">
+          <button id="btn-add-sticker-imgs" class="auth-btn" style="background:rgba(255,255,255,0.05); border:1px solid var(--border-color); color:var(--text-main); margin-bottom:8px; padding:10px; font-size:13px;">Добавить стикеры 🖼️</button>
+          <input type="file" id="sticker-files-input" accept="image/*" multiple style="display:none;">
+          <div class="sticker-create-grid" id="sticker-create-preview"></div>
+          <button id="btn-save-sticker-pack" class="auth-btn" style="margin-top:10px; display:none; padding:10px; font-size:13px;">Опубликовать стикерпак 🚀</button>
+        </div>
       </div>
 
-      <!-- ОБОИ -->
-      <div class="custom-section">
-        <h4>🖼️ Обои в чате</h4>
-        <button id="btn-bg-file" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 8px;">Загрузить свое фото 🏞️</button>
-        <button onclick="resetChatWallpaper()" class="auth-btn" style="background: transparent; color: var(--text-sub); font-size: 13px; padding: 4px;">Сбросить обои</button>
-        <input type="file" id="bg-file-input" accept="image/*" style="display:none;">
-      </div>
-
-      <!-- ВЫХОД ИЗ АККАУНТА -->
-      <div class="custom-section" style="margin-top: 10px;">
-        <button id="btn-logout-settings" class="auth-btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444;">🚪 Выйти из этого аккаунта</button>
+      <!-- Вкладка 4: Уведомления / Разное -->
+      <div id="notif-tab" class="settings-tab-content">
+        <div class="custom-section">
+          <h4>🔔 Уведомления</h4>
+          <button id="btn-enable-notifications" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); padding:10px; font-size:13px;">Включить уведомления 🔔</button>
+        </div>
       </div>
 
     </div>
@@ -377,18 +398,25 @@
     let unsubscribeChat = null;
     let chatListeners = {};
     let unreadCounts = {};
-    let myChats = JSON.parse(localStorage.getItem("larp_chats") || "[]");
-    let usersCache = {};
+    
+    // Чаты теперь строго уникальны для каждого аккаунта
+    let myChats = [];
 
-    // Состояние редактирования/удаления
+    let usersCache = {};
     let selectedMsgData = null;
     let editingMsgId = null;
 
-    // Стикеры
     let myStickerPacks = JSON.parse(localStorage.getItem("larp_my_sticker_packs") || "[]");
     let newPackStickersTemp = [];
 
-    // Хеширование паролей для защиты (SHA-256)
+    // Переключение вкладок в настройках
+    window.switchSettingsTab = function(tabId, btn) {
+      document.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.settings-tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(tabId).classList.add('active');
+    };
+
     async function hashPassword(password) {
       const msgBuffer = new TextEncoder().encode(password);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -396,7 +424,6 @@
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     }
 
-    // Темы оформления
     const defaultThemes = {
       default: { accent: '#6366f1', bg: '#0b0e14' },
       midnight: { accent: '#38bdf8', bg: '#030712' },
@@ -492,7 +519,6 @@
     applyTheme(localStorage.getItem("larp_current_theme") || "default");
     renderSavedPresets();
 
-    // Обои
     const bgFileInput = document.getElementById('bg-file-input');
     document.getElementById('btn-bg-file').addEventListener('click', () => bgFileInput.click());
 
@@ -536,22 +562,13 @@
     });
 
     document.getElementById('btn-enable-notifications').addEventListener('click', () => {
-      if (!('Notification' in window)) {
-        alert('Уведомления не поддерживаются вашим браузером');
-        return;
-      }
+      if (!('Notification' in window)) return alert('Уведомления не поддерживаются');
       Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          alert('Уведомления успешно включены!');
-        } else if (permission === 'denied') {
-          alert('Уведомления заблокированы в настройках браузера.');
-        } else {
-          alert('Статус уведомлений: ' + permission);
-        }
+        alert('Статус уведомлений: ' + permission);
       });
     });
 
-    // ---------------- МУЛЬТИ-АККАУНТ И ЛОГИКА ВХОДА ---------------- //
+    // ---------------- МУЛЬТИ-АККАУНТ ---------------- //
 
     function getSavedAccounts() {
       return JSON.parse(localStorage.getItem("larp_accounts") || "[]");
@@ -567,10 +584,9 @@
 
     function renderAccountsList() {
       const container = document.getElementById('accounts-list-container');
-      const accounts = getSavedAccounts();
       container.innerHTML = '';
 
-      if (accounts.length === 0 && currentUser) {
+      if (getSavedAccounts().length === 0 && currentUser) {
         saveAccountToList(currentUser);
       }
 
@@ -608,7 +624,7 @@
 
     // ---------------- ЛОГИКА АВТОРИЗАЦИИ ---------------- //
 
-    let authState = 'CHECK_USERNAME'; // 'CHECK_USERNAME' | 'LOGIN' | 'REGISTER'
+    let authState = 'CHECK_USERNAME';
     let currentAuthUser = null;
 
     const usernameInput = document.getElementById('reg-username');
@@ -629,10 +645,7 @@
       const username = usernameInput.value.toLowerCase().replace('@', '').trim();
       const password = passwordInput.value.trim();
 
-      if (!username) {
-        showAuthMsg('Введи username!', 'error');
-        return;
-      }
+      if (!username) return showAuthMsg('Введи username!', 'error');
 
       if (authState === 'CHECK_USERNAME') {
         authBtn.innerText = 'Проверка...';
@@ -641,7 +654,7 @@
         const userSnap = await getDoc(doc(db, "users", username));
 
         if (!userSnap.exists()) {
-          // Аккаунт новый -> Регистрация с паролем
+          // Аккаунта нет -> Регистрация
           authState = 'REGISTER';
           currentAuthUser = username;
           usernameInput.disabled = true;
@@ -655,7 +668,7 @@
           currentAuthUser = username;
 
           if (userData.passwordHash) {
-            // Обычный вход с паролем
+            // Обычный вход
             authState = 'LOGIN';
             usernameInput.disabled = true;
             passwordInput.style.display = 'block';
@@ -664,8 +677,14 @@
             authBtn.innerText = 'Войти';
             showAuthMsg('');
           } else {
-            // Старый аккаунт без пароля -> Впускаем сразу
-            loginSuccess(currentAuthUser);
+            // Старый аккаунт БЕЗ пароля -> Заставляем установить пароль!
+            authState = 'REGISTER';
+            usernameInput.disabled = true;
+            passwordInput.style.display = 'block';
+            authSubtitle.innerText = `Защитите ваш аккаунт @${username}`;
+            passwordInput.placeholder = 'Придумай пароль';
+            authBtn.innerText = 'Сохранить и войти';
+            showAuthMsg('У этого аккаунта нет пароля. Задайте его прямо сейчас!', 'info');
           }
         }
         authBtn.disabled = false;
@@ -710,7 +729,6 @@
       initApp();
     }
 
-    // Выход из аккаунта из Настроек
     document.getElementById('btn-logout-settings').addEventListener('click', () => {
       if (confirm("Выйти из этого аккаунта?")) {
         let accounts = getSavedAccounts().filter(a => a !== currentUser);
@@ -725,23 +743,60 @@
       }
     });
 
-    // Установка/смена пароля в настройках
+    // Установка/смена пароля с проверкой СТАРОГО пароля
     document.getElementById('btn-save-password').addEventListener('click', async () => {
+      const oldPass = document.getElementById('settings-old-password').value.trim();
       const newPass = document.getElementById('settings-new-password').value.trim();
-      if (!newPass || newPass.length < 4) return alert("Пароль должен быть минимум 4 символа!");
 
-      const hashedPassword = await hashPassword(newPass);
-      await setDoc(doc(db, "users", currentUser), { passwordHash: hashedPassword }, { merge: true });
-      alert("Пароль успешно сохранён!");
+      if (!newPass || newPass.length < 4) return alert("Новый пароль должен быть от 4 символов!");
+
+      const userSnap = await getDoc(doc(db, "users", currentUser));
+      const userData = userSnap.data();
+
+      // Если пароль уже был -> требуем старый
+      if (userData && userData.passwordHash) {
+        if (!oldPass) return alert("Введите старый пароль!");
+        const oldHashed = await hashPassword(oldPass);
+        if (oldHashed !== userData.passwordHash) {
+          return alert("Старый пароль указан неверно!");
+        }
+      }
+
+      const newHashed = await hashPassword(newPass);
+      await setDoc(doc(db, "users", currentUser), { passwordHash: newHashed }, { merge: true });
+      alert("Пароль успешно обновлён!");
+      document.getElementById('settings-old-password').value = '';
       document.getElementById('settings-new-password').value = '';
     });
 
     // --------------------------------------------------------------- //
 
-    function initApp() {
+    async function initApp() {
+      await loadMyChatsFromCloud();
       loadUserData(currentUser);
       renderChatsList();
       listenToAllChatsUnread();
+    }
+
+    // Загрузка списков чатов конкретного аккаунта из Firebase
+    async function loadMyChatsFromCloud() {
+      try {
+        const uSnap = await getDoc(doc(db, "users", currentUser));
+        if (uSnap.exists() && uSnap.data().chats) {
+          myChats = uSnap.data().chats;
+        } else {
+          // Резерв локально по ключу юзера
+          myChats = JSON.parse(localStorage.getItem(`larp_chats_${currentUser}`) || "[]");
+        }
+      } catch(e) {
+        console.error("Ошибка загрузки чатов:", e);
+        myChats = JSON.parse(localStorage.getItem(`larp_chats_${currentUser}`) || "[]");
+      }
+    }
+
+    async function syncMyChatsToCloud() {
+      localStorage.setItem(`larp_chats_${currentUser}`, JSON.stringify(myChats));
+      await setDoc(doc(db, "users", currentUser), { chats: myChats }, { merge: true });
     }
 
     async function loadUserData(username) {
@@ -846,7 +901,7 @@
 
       if (!myChats.includes(targetUser) && targetUser !== currentUser) {
         myChats.push(targetUser);
-        localStorage.setItem("larp_chats", JSON.stringify(myChats));
+        await syncMyChatsToCloud();
         listenToAllChatsUnread();
       }
 
@@ -1155,7 +1210,7 @@
       btn.disabled = false;
     });
 
-    // Чужой профиль
+    // Профиль чужого юзера
     document.getElementById('btn-open-peer-profile').addEventListener('click', async () => {
       if (!activePeer) return;
 
@@ -1182,14 +1237,24 @@
       document.getElementById('peer-profile-modal').classList.remove('active');
     });
 
-    // Настройки
+    // Открытие Настроек
     document.getElementById('nav-profile').addEventListener('click', async () => {
       document.getElementById('profile-modal').classList.add('active');
       document.getElementById('profile-username-text').innerText = `@${currentUser}`;
       
       renderAccountsList();
 
-      const myData = await loadUserData(currentUser);
+      const userSnap = await getDoc(doc(db, "users", currentUser));
+      const myData = userSnap.data();
+
+      // Настройка видимости поля старого пароля
+      const oldPassInput = document.getElementById('settings-old-password');
+      if (myData && myData.passwordHash) {
+        oldPassInput.style.display = 'block';
+      } else {
+        oldPassInput.style.display = 'none';
+      }
+
       if (myData && myData.avatarUrl) {
         document.getElementById('profile-avatar-img').src = myData.avatarUrl;
         document.getElementById('profile-avatar-img').style.display = 'block';
