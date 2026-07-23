@@ -19,7 +19,7 @@
     .auth-input { width: 100%; padding: 12px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 10px; margin-bottom: 12px; outline: none; font-size: 14px; }
     .auth-btn { width: 100%; padding: 12px; background: #5288c1; border: none; color: #fff; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
 
-    /* Экран со списком чатов (Главный) */
+    /* Главный экран */
     #main-screen { display: flex; flex-direction: column; height: 100%; width: 100%; }
 
     /* Шапка Telegram style */
@@ -31,7 +31,7 @@
     .search-container input { flex: 1; padding: 10px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 10px; outline: none; font-size: 14px; }
     .search-container button { padding: 10px 14px; background: #5288c1; color: #fff; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; }
 
-    /* Вертикальный список чатов в столбик */
+    /* Вертикальный список чатов */
     #chats-list-vertical { flex: 1; overflow-y: auto; background: #0e1621; display: flex; flex-direction: column; }
     .chat-row { display: flex; align-items: center; padding: 12px 16px; gap: 12px; border-bottom: 1px solid #17212b; cursor: pointer; }
     .chat-row:active { background: #17212b; }
@@ -46,7 +46,7 @@
     .nav-btn.active { color: #5288c1; }
     .nav-btn span { font-size: 18px; }
 
-    /* Экран чата (Выплывает поверх основного) */
+    /* Экран чата */
     #chat-screen { position: fixed; inset: 0; background: #0e1621; z-index: 1000; display: flex; flex-direction: column; transform: translateX(100%); transition: transform 0.2s ease-in-out; }
     #chat-screen.active { transform: translateX(0); }
 
@@ -64,11 +64,15 @@
     .input-bar input { flex: 1; padding: 10px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 20px; outline: none; font-size: 14px; }
     .input-bar button { background: #5288c1; border: none; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
 
-    /* Окно профиля */
+    /* Настройки профиля */
     #profile-modal { position: fixed; inset: 0; background: #0e1621; z-index: 1500; display: none; flex-direction: column; padding: 20px; }
     #profile-modal.active { display: flex; }
-    .profile-card { background: #17212b; border-radius: 16px; padding: 20px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
-    .profile-avatar-preview { width: 90px; height: 90px; border-radius: 50%; background: #2b5278; object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; }
+    .profile-card { background: #17212b; border-radius: 16px; padding: 24px; display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    
+    /* Кликабельная аватарка в профиле */
+    .avatar-upload-wrapper { position: relative; cursor: pointer; }
+    .avatar-upload-wrapper:hover::after { content: '📷'; position: absolute; inset: 0; background: rgba(0,0,0,0.4); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; }
+    .profile-avatar-preview { width: 100px; height: 100px; border-radius: 50%; background: #2b5278; object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: bold; }
 
     #error-box { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,0,0,0.9); color: white; padding: 8px; font-size: 11px; z-index: 9999; display: none; }
   </style>
@@ -134,13 +138,20 @@
       <button id="btn-close-profile" style="background:none; border:none; color:#5288c1; font-size:16px;">Закрыть</button>
     </div>
     <div class="profile-card">
-      <div id="profile-avatar-ph" class="profile-avatar-preview">?</div>
-      <img id="profile-avatar-img" class="profile-avatar-preview" style="display:none;">
       
+      <!-- Кликабельная область выборки фото -->
+      <div class="avatar-upload-wrapper" id="btn-trigger-file">
+        <div id="profile-avatar-ph" class="profile-avatar-preview">?</div>
+        <img id="profile-avatar-img" class="profile-avatar-preview" style="display:none;">
+      </div>
+      
+      <!-- Скрытый инпут файла -->
+      <input type="file" id="avatar-file-input" accept="image/*" style="display:none;">
+
       <p id="profile-username-text" style="font-weight:600; font-size:18px; color:#fff;"></p>
       
-      <input type="text" id="profile-avatar-url" class="auth-input" placeholder="Ссылка на аватарку (URL)">
-      <button id="btn-save-profile" class="auth-btn">Сохранить аватарку</button>
+      <button id="btn-choose-file" class="auth-btn">Выбрать фото из галереи 📷</button>
+      <p id="upload-status" style="font-size:12px; color:#7f91a4; display:none;">Сжатие и загрузка...</p>
     </div>
   </div>
 
@@ -260,7 +271,6 @@
       currentRoom = getPrivateChatId(currentUser, targetUser);
       document.getElementById('chat-peer-title').innerText = `@${targetUser}`;
 
-      // Аватар собеседника
       const uData = await loadUserData(targetUser);
       const imgEl = document.getElementById('chat-peer-avatar');
       const phEl = document.getElementById('chat-peer-avatar-ph');
@@ -288,13 +298,11 @@
       });
     }
 
-    // Закрыть чат
     document.getElementById('btn-back').addEventListener('click', () => {
       document.getElementById('chat-screen').classList.remove('active');
       renderChatsList();
     });
 
-    // Отправка сообщений
     async function sendMessage() {
       const input = document.getElementById('msg-input');
       const text = input.value.trim();
@@ -331,7 +339,6 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    // Поиск
     document.getElementById('btn-start-chat').addEventListener('click', () => {
       const target = document.getElementById('target-username').value.replace('@', '').trim();
       if (target) {
@@ -345,14 +352,14 @@
       if (e.key === 'Enter') sendMessage();
     });
 
-    // Профиль
+    // --- ЛОГИКА ЗАГРУЗКИ АВАТАРКИ ФАЙЛОМ ---
+    
     document.getElementById('nav-profile').addEventListener('click', async () => {
       document.getElementById('profile-modal').classList.add('active');
       document.getElementById('profile-username-text').innerText = `@${currentUser}`;
       
       const myData = await loadUserData(currentUser);
       if (myData && myData.avatarUrl) {
-        document.getElementById('profile-avatar-url').value = myData.avatarUrl;
         document.getElementById('profile-avatar-img').src = myData.avatarUrl;
         document.getElementById('profile-avatar-img').style.display = 'block';
         document.getElementById('profile-avatar-ph').style.display = 'none';
@@ -365,13 +372,52 @@
       document.getElementById('profile-modal').classList.remove('active');
     });
 
-    document.getElementById('btn-save-profile').addEventListener('click', async () => {
-      const url = document.getElementById('profile-avatar-url').value.trim();
-      await setDoc(doc(db, "users", currentUser), { avatarUrl: url }, { merge: true });
-      usersCache[currentUser] = { avatarUrl: url };
-      alert('Аватарка обновлена!');
-      document.getElementById('profile-modal').classList.remove('active');
-      renderChatsList();
+    const fileInput = document.getElementById('avatar-file-input');
+    
+    document.getElementById('btn-choose-file').addEventListener('click', () => fileInput.click());
+    document.getElementById('btn-trigger-file').addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const status = document.getElementById('upload-status');
+      status.style.display = 'block';
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Сжимаем картинку до 200x200 пикселей прямо в браузере
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          const size = 200;
+          canvas.width = size;
+          canvas.height = size;
+
+          // Обрезаем по центру в квадрат
+          const minDim = Math.min(img.width, img.height);
+          const sx = (img.width - minDim) / 2;
+          const sy = (img.height - minDim) / 2;
+
+          ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+
+          // Конвертируем в легкий JPEG
+          const base64Url = canvas.toDataURL('image/jpeg', 0.8);
+
+          // Сохраняем в Firestore
+          setDoc(doc(db, "users", currentUser), { avatarUrl: base64Url }, { merge: true }).then(() => {
+            usersCache[currentUser] = { avatarUrl: base64Url };
+            document.getElementById('profile-avatar-img').src = base64Url;
+            document.getElementById('profile-avatar-img').style.display = 'block';
+            document.getElementById('profile-avatar-ph').style.display = 'none';
+            status.style.display = 'none';
+            renderChatsList();
+          });
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
     });
   </script>
 </body>
