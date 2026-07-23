@@ -30,11 +30,14 @@
     #auth-screen { position: fixed; inset: 0; background: radial-gradient(circle at top, #1e1b4b 0%, var(--bg-main) 70%); z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .auth-card { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--border-color); border-radius: 24px; padding: 32px 24px; width: 100%; max-width: 360px; box-shadow: 0 20px 50px rgba(0,0,0,0.6); text-align: center; }
     .auth-card h2 { font-size: 26px; background: var(--accent-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; font-weight: 800; }
-    .auth-card p { font-size: 13px; color: var(--text-sub); margin-bottom: 24px; }
-    .auth-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 14px; margin-bottom: 14px; outline: none; font-size: 15px; transition: border 0.2s; }
+    .auth-card p { font-size: 13px; color: var(--text-sub); margin-bottom: 20px; line-height: 1.4; }
+    .auth-input { width: 100%; padding: 14px 16px; background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 14px; margin-bottom: 12px; outline: none; font-size: 15px; transition: border 0.2s; }
     .auth-input:focus { border-color: var(--accent-color); }
     .auth-btn { width: 100%; padding: 14px; background: var(--accent-gradient); border: none; color: #fff; border-radius: 14px; font-weight: 700; font-size: 15px; cursor: pointer; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.35); transition: transform 0.1s; }
     .auth-btn:active { transform: scale(0.98); }
+    .auth-msg { font-size: 12px; margin-top: 10px; min-height: 16px; }
+    .auth-msg.error { color: #ef4444; }
+    .auth-msg.info { color: #38bdf8; }
 
     /* Главный экран */
     #main-screen { display: flex; flex-direction: column; height: 100%; width: 100%; }
@@ -102,7 +105,7 @@
     .input-bar input { flex: 1; padding: 12px 18px; background: rgba(0,0,0,0.25); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 24px; outline: none; font-size: 14px; }
     .input-bar button { background: var(--accent-gradient); border: none; width: 44px; height: 44px; border-radius: 50%; color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4); }
 
-    /* Панель взаимодействия с сообщением (Контекстное меню) */
+    /* Панель взаимодействия с сообщением */
     #msg-actions-modal { position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 3000; display: none; align-items: flex-end; justify-content: center; }
     #msg-actions-modal.active { display: flex; }
     .actions-sheet { background: var(--bg-card); border: 1px solid var(--border-color); border-top-left-radius: 24px; border-top-right-radius: 24px; width: 100%; max-width: 500px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 -10px 30px rgba(0,0,0,0.5); animation: slideUp 0.2s ease-out; }
@@ -129,7 +132,7 @@
     .profile-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 18px; align-items: center; width: 100%; max-width: 420px; margin: auto; box-shadow: 0 16px 40px rgba(0,0,0,0.5); }
     
     .avatar-upload-wrapper { position: relative; cursor: pointer; }
-    .avatar-upload-wrapper:hover::after { content: '📷'; position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .avatar-upload-wrapper:hover::after { content: '📷'; position: absolute; inset: 0; background: rgba(0,0,0,0.5); border-radius: 28px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
     .profile-avatar-preview { width: 110px; height: 110px; border-radius: 28px; background: var(--accent-gradient); object-fit: cover; display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: bold; color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
 
     .custom-section { width: 100%; text-align: left; }
@@ -154,13 +157,17 @@
 
   <div id="error-box"></div>
 
-  <!-- Экран авторизации -->
+  <!-- Обновлённый экран авторизации -->
   <div id="auth-screen">
     <div class="auth-card">
       <h2>Larpessenger ✨</h2>
-      <p>Введи свой @username для входа в сеть</p>
+      <p id="auth-subtitle">Введи @username для входа или регистрации</p>
+
       <input type="text" id="reg-username" class="auth-input" placeholder="@username">
-      <button id="btn-register" class="auth-btn">Войти в мессенджер</button>
+      <input type="password" id="reg-password" class="auth-input" placeholder="Пароль" style="display: none;">
+
+      <button id="btn-auth-next" class="auth-btn">Продолжить ➔</button>
+      <div id="auth-msg" class="auth-msg"></div>
     </div>
   </div>
 
@@ -168,7 +175,7 @@
   <div id="main-screen">
     <div class="app-header">
       <div class="app-title">Larpessenger</div>
-      <button id="btn-push" style="background:none; border:none; font-size:20px; cursor:pointer;">🔔</button>
+      <button id="btn-logout" style="background:none; border:none; font-size:18px; cursor:pointer;" title="Выйти">🚪</button>
     </div>
 
     <div class="search-container">
@@ -220,7 +227,7 @@
     </div>
   </div>
 
-  <!-- Меню действия над сообщением (Удаление / Изменение) -->
+  <!-- Меню действия над сообщением -->
   <div id="msg-actions-modal">
     <div class="actions-sheet">
       <button class="action-btn" id="btn-action-edit">✏️ Редактировать сообщение</button>
@@ -353,7 +360,15 @@
     let myStickerPacks = JSON.parse(localStorage.getItem("larp_my_sticker_packs") || "[]");
     let newPackStickersTemp = [];
 
-    // Цветовые темы
+    // Хеширование паролей для защиты (SHA-256)
+    async function hashPassword(password) {
+      const msgBuffer = new TextEncoder().encode(password);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    // Темы оформления
     const defaultThemes = {
       default: { accent: '#6366f1', bg: '#0b0e14' },
       midnight: { accent: '#38bdf8', bg: '#030712' },
@@ -484,23 +499,130 @@
       applyTheme(localStorage.getItem("larp_current_theme") || "default");
     };
 
-    // Авторизация
+    // ---------------- ЛОГИКА АВТОРИЗАЦИИ И МИГРАЦИИ ---------------- //
+
+    let authState = 'CHECK_USERNAME'; // 'CHECK_USERNAME' | 'LOGIN' | 'REGISTER' | 'MIGRATE'
+    let currentAuthUser = null;
+
+    const usernameInput = document.getElementById('reg-username');
+    const passwordInput = document.getElementById('reg-password');
+    const authBtn = document.getElementById('btn-auth-next');
+    const authSubtitle = document.getElementById('auth-subtitle');
+    const authMsg = document.getElementById('auth-msg');
+
     if (currentUser) {
       document.getElementById('auth-screen').style.display = 'none';
       initApp();
     }
 
-    document.getElementById('btn-register').addEventListener('click', () => {
-      const input = document.getElementById('reg-username').value.toLowerCase().replace('@', '').trim();
-      if (!input) return;
+    authBtn.addEventListener('click', handleAuthStep);
 
-      currentUser = input;
-      localStorage.setItem("larp_username", input);
-      setDoc(doc(db, "users", input), { username: input }, { merge: true });
+    async function handleAuthStep() {
+      const username = usernameInput.value.toLowerCase().replace('@', '').trim();
+      const password = passwordInput.value.trim();
 
+      if (!username) {
+        showAuthMsg('Введи username!', 'error');
+        return;
+      }
+
+      if (authState === 'CHECK_USERNAME') {
+        authBtn.innerText = 'Проверка...';
+        authBtn.disabled = true;
+
+        const userSnap = await getDoc(doc(db, "users", username));
+
+        if (!userSnap.exists()) {
+          // Аккаунт новый -> Регистрация
+          authState = 'REGISTER';
+          currentAuthUser = username;
+          usernameInput.disabled = true;
+          passwordInput.style.display = 'block';
+          passwordInput.placeholder = 'Придумай пароль';
+          authSubtitle.innerText = `Создаём аккаунт для @${username}`;
+          authBtn.innerText = 'Зарегистрироваться';
+          showAuthMsg('Укажи пароль для нового аккаунта', 'info');
+        } else {
+          const userData = userSnap.data();
+          currentAuthUser = username;
+          usernameInput.disabled = true;
+          passwordInput.style.display = 'block';
+
+          if (userData.passwordHash) {
+            // Обычный вход с паролем
+            authState = 'LOGIN';
+            authSubtitle.innerText = `Вход в аккаунт @${username}`;
+            passwordInput.placeholder = 'Введи пароль';
+            authBtn.innerText = 'Войти';
+            showAuthMsg('');
+          } else {
+            // Старый аккаунт без пароля -> МИГРАЦИЯ
+            authState = 'MIGRATE';
+            authSubtitle.innerText = `Безопасность: Придумай пароль для @${username}`;
+            passwordInput.placeholder = 'Придумай новый пароль';
+            authBtn.innerText = 'Сохранить пароль и войти';
+            showAuthMsg('Твой аккаунт зарегистрирован ранее. Установи пароль!', 'info');
+          }
+        }
+        authBtn.disabled = false;
+        passwordInput.focus();
+
+      } else if (authState === 'LOGIN') {
+        if (!password) return showAuthMsg('Введи пароль!', 'error');
+
+        const hashedPassword = await hashPassword(password);
+        const userSnap = await getDoc(doc(db, "users", currentAuthUser));
+        
+        if (userSnap.exists() && userSnap.data().passwordHash === hashedPassword) {
+          loginSuccess(currentAuthUser);
+        } else {
+          showAuthMsg('Неверный пароль!', 'error');
+        }
+
+      } else if (authState === 'REGISTER') {
+        if (!password || password.length < 4) return showAuthMsg('Пароль должен быть от 4 символов!', 'error');
+
+        const hashedPassword = await hashPassword(password);
+        await setDoc(doc(db, "users", currentAuthUser), { 
+          username: currentAuthUser,
+          passwordHash: hashedPassword,
+          createdAt: serverTimestamp()
+        }, { merge: true });
+
+        loginSuccess(currentAuthUser);
+
+      } else if (authState === 'MIGRATE') {
+        if (!password || password.length < 4) return showAuthMsg('Пароль должен быть от 4 символов!', 'error');
+
+        const hashedPassword = await hashPassword(password);
+        await setDoc(doc(db, "users", currentAuthUser), { 
+          passwordHash: hashedPassword 
+        }, { merge: true });
+
+        loginSuccess(currentAuthUser);
+      }
+    }
+
+    function showAuthMsg(msg, type = 'error') {
+      authMsg.innerText = msg;
+      authMsg.className = `auth-msg ${type}`;
+    }
+
+    function loginSuccess(username) {
+      currentUser = username;
+      localStorage.setItem("larp_username", username);
       document.getElementById('auth-screen').style.display = 'none';
       initApp();
+    }
+
+    document.getElementById('btn-logout').addEventListener('click', () => {
+      if (confirm("Выйти из аккаунта?")) {
+        localStorage.removeItem("larp_username");
+        location.reload();
+      }
     });
+
+    // --------------------------------------------------------------- //
 
     function initApp() {
       loadUserData(currentUser);
@@ -655,12 +777,11 @@
     // ---------------- РЕДАКТИРОВАНИЕ И УДАЛЕНИЕ ---------------- //
 
     function openMsgActions(msgId, data) {
-      if (data.author.toLowerCase() !== currentUser.toLowerCase()) return; // Только свои сообщения
+      if (data.author.toLowerCase() !== currentUser.toLowerCase()) return;
 
       selectedMsgData = { id: msgId, ...data };
       document.getElementById('msg-actions-modal').classList.add('active');
 
-      // Редактирование доступно только для текста
       const editBtn = document.getElementById('btn-action-edit');
       editBtn.style.display = data.type === 'sticker' ? 'none' : 'flex';
     }
@@ -699,7 +820,6 @@
       if (!currentRoom) return;
 
       if (editingMsgId) {
-        // Режим редактирования
         if (text) {
           await updateDoc(doc(db, "chats", currentRoom, "messages", editingMsgId), {
             text: text,
