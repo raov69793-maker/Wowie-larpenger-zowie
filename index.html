@@ -150,6 +150,10 @@
     .sticker-create-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: 10px; }
     .sticker-preview-item { width: 100%; aspect-ratio: 1; border-radius: 12px; background: var(--bg-main); object-fit: cover; }
 
+    /* Элементы списка аккаунтов */
+    .account-item-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 14px; margin-bottom: 6px; }
+    .account-item-row.active-acc { border-color: var(--accent-color); background: rgba(99, 102, 241, 0.1); }
+
     #error-box { position: fixed; top: 0; left: 0; right: 0; background: rgba(239, 68, 68, 0.95); color: white; padding: 10px; font-size: 12px; z-index: 9999; display: none; text-align: center; font-weight: bold; }
   </style>
 </head>
@@ -157,7 +161,7 @@
 
   <div id="error-box"></div>
 
-  <!-- Обновлённый экран авторизации -->
+  <!-- Экран авторизации -->
   <div id="auth-screen">
     <div class="auth-card">
       <h2>Larpessenger ✨</h2>
@@ -175,7 +179,6 @@
   <div id="main-screen">
     <div class="app-header">
       <div class="app-title">Larpessenger</div>
-      <button id="btn-logout" style="background:none; border:none; font-size:18px; cursor:pointer;" title="Выйти">🚪</button>
     </div>
 
     <div class="search-container">
@@ -253,6 +256,26 @@
       <button id="btn-choose-file" class="auth-btn">Сменить фото профиля 📷</button>
       <p id="upload-status" style="font-size:12px; color:var(--text-sub); display:none;">Обработка...</p>
 
+      <!-- МУЛЬТИ-АККАУНТ -->
+      <div class="custom-section">
+        <h4>👥 Мои аккаунты</h4>
+        <div id="accounts-list-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+        <button id="btn-add-account" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main);">➕ Добавить аккаунт</button>
+      </div>
+
+      <!-- УВЕДОМЛЕНИЯ -->
+      <div class="custom-section">
+        <h4>🔔 Уведомления</h4>
+        <button id="btn-enable-notifications" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main);">Включить уведомления 🔔</button>
+      </div>
+
+      <!-- БЕЗОПАСНОСТЬ И ПАРОЛЬ -->
+      <div class="custom-section">
+        <h4>🔐 Пароль</h4>
+        <input type="password" id="settings-new-password" class="auth-input" placeholder="Установить / сменить пароль" style="margin-bottom:8px;">
+        <button id="btn-save-password" class="auth-btn" style="padding:10px;">Сохранить пароль 💾</button>
+      </div>
+
       <!-- СОЗДАНИЕ СТИКЕРПАКА -->
       <div class="custom-section">
         <h4>✨ Создать свой стикерпак</h4>
@@ -299,6 +322,11 @@
         <button id="btn-bg-file" class="auth-btn" style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 8px;">Загрузить свое фото 🏞️</button>
         <button onclick="resetChatWallpaper()" class="auth-btn" style="background: transparent; color: var(--text-sub); font-size: 13px; padding: 4px;">Сбросить обои</button>
         <input type="file" id="bg-file-input" accept="image/*" style="display:none;">
+      </div>
+
+      <!-- ВЫХОД ИЗ АККАУНТА -->
+      <div class="custom-section" style="margin-top: 10px;">
+        <button id="btn-logout-settings" class="auth-btn" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #ef4444;">🚪 Выйти из этого аккаунта</button>
       </div>
 
     </div>
@@ -499,9 +527,88 @@
       applyTheme(localStorage.getItem("larp_current_theme") || "default");
     };
 
-    // ---------------- ЛОГИКА АВТОРИЗАЦИИ И МИГРАЦИИ ---------------- //
+    // ----------------- УВЕДОМЛЕНИЯ ----------------- //
 
-    let authState = 'CHECK_USERNAME'; // 'CHECK_USERNAME' | 'LOGIN' | 'REGISTER' | 'MIGRATE'
+    document.addEventListener('DOMContentLoaded', () => {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    });
+
+    document.getElementById('btn-enable-notifications').addEventListener('click', () => {
+      if (!('Notification' in window)) {
+        alert('Уведомления не поддерживаются вашим браузером');
+        return;
+      }
+      Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+          alert('Уведомления успешно включены!');
+        } else if (permission === 'denied') {
+          alert('Уведомления заблокированы в настройках браузера.');
+        } else {
+          alert('Статус уведомлений: ' + permission);
+        }
+      });
+    });
+
+    // ---------------- МУЛЬТИ-АККАУНТ И ЛОГИКА ВХОДА ---------------- //
+
+    function getSavedAccounts() {
+      return JSON.parse(localStorage.getItem("larp_accounts") || "[]");
+    }
+
+    function saveAccountToList(username) {
+      let accounts = getSavedAccounts();
+      if (!accounts.includes(username)) {
+        accounts.push(username);
+        localStorage.setItem("larp_accounts", JSON.stringify(accounts));
+      }
+    }
+
+    function renderAccountsList() {
+      const container = document.getElementById('accounts-list-container');
+      const accounts = getSavedAccounts();
+      container.innerHTML = '';
+
+      if (accounts.length === 0 && currentUser) {
+        saveAccountToList(currentUser);
+      }
+
+      getSavedAccounts().forEach(acc => {
+        const row = document.createElement('div');
+        row.className = `account-item-row ${acc === currentUser ? 'active-acc' : ''}`;
+        row.innerHTML = `
+          <div>
+            <div style="font-weight:700; font-size:14px; color:var(--text-main);">@${acc}</div>
+            <div style="font-size:11px; color:var(--text-sub);">${acc === currentUser ? 'Текущий' : 'Сохранён'}</div>
+          </div>
+          ${acc !== currentUser ? `<button class="auth-btn" style="width:auto; padding:6px 12px; font-size:12px;" onclick="switchAccount('${acc}')">Войти</button>` : ''}
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    window.switchAccount = function(username) {
+      localStorage.setItem("larp_username", username);
+      location.reload();
+    };
+
+    document.getElementById('btn-add-account').addEventListener('click', () => {
+      document.getElementById('profile-modal').classList.remove('active');
+      document.getElementById('auth-screen').style.display = 'flex';
+      usernameInput.disabled = false;
+      usernameInput.value = '';
+      passwordInput.style.display = 'none';
+      passwordInput.value = '';
+      authSubtitle.innerText = 'Введи @username для входа или регистрации';
+      authBtn.innerText = 'Продолжить ➔';
+      authState = 'CHECK_USERNAME';
+      showAuthMsg('');
+    });
+
+    // ---------------- ЛОГИКА АВТОРИЗАЦИИ ---------------- //
+
+    let authState = 'CHECK_USERNAME'; // 'CHECK_USERNAME' | 'LOGIN' | 'REGISTER'
     let currentAuthUser = null;
 
     const usernameInput = document.getElementById('reg-username');
@@ -512,6 +619,7 @@
 
     if (currentUser) {
       document.getElementById('auth-screen').style.display = 'none';
+      saveAccountToList(currentUser);
       initApp();
     }
 
@@ -533,7 +641,7 @@
         const userSnap = await getDoc(doc(db, "users", username));
 
         if (!userSnap.exists()) {
-          // Аккаунт новый -> Регистрация
+          // Аккаунт новый -> Регистрация с паролем
           authState = 'REGISTER';
           currentAuthUser = username;
           usernameInput.disabled = true;
@@ -545,27 +653,23 @@
         } else {
           const userData = userSnap.data();
           currentAuthUser = username;
-          usernameInput.disabled = true;
-          passwordInput.style.display = 'block';
 
           if (userData.passwordHash) {
             // Обычный вход с паролем
             authState = 'LOGIN';
+            usernameInput.disabled = true;
+            passwordInput.style.display = 'block';
             authSubtitle.innerText = `Вход в аккаунт @${username}`;
             passwordInput.placeholder = 'Введи пароль';
             authBtn.innerText = 'Войти';
             showAuthMsg('');
           } else {
-            // Старый аккаунт без пароля -> МИГРАЦИЯ
-            authState = 'MIGRATE';
-            authSubtitle.innerText = `Безопасность: Придумай пароль для @${username}`;
-            passwordInput.placeholder = 'Придумай новый пароль';
-            authBtn.innerText = 'Сохранить пароль и войти';
-            showAuthMsg('Твой аккаунт зарегистрирован ранее. Установи пароль!', 'info');
+            // Старый аккаунт без пароля -> Впускаем сразу
+            loginSuccess(currentAuthUser);
           }
         }
         authBtn.disabled = false;
-        passwordInput.focus();
+        if (passwordInput.style.display !== 'none') passwordInput.focus();
 
       } else if (authState === 'LOGIN') {
         if (!password) return showAuthMsg('Введи пароль!', 'error');
@@ -590,16 +694,6 @@
         }, { merge: true });
 
         loginSuccess(currentAuthUser);
-
-      } else if (authState === 'MIGRATE') {
-        if (!password || password.length < 4) return showAuthMsg('Пароль должен быть от 4 символов!', 'error');
-
-        const hashedPassword = await hashPassword(password);
-        await setDoc(doc(db, "users", currentAuthUser), { 
-          passwordHash: hashedPassword 
-        }, { merge: true });
-
-        loginSuccess(currentAuthUser);
       }
     }
 
@@ -611,15 +705,35 @@
     function loginSuccess(username) {
       currentUser = username;
       localStorage.setItem("larp_username", username);
+      saveAccountToList(username);
       document.getElementById('auth-screen').style.display = 'none';
       initApp();
     }
 
-    document.getElementById('btn-logout').addEventListener('click', () => {
-      if (confirm("Выйти из аккаунта?")) {
-        localStorage.removeItem("larp_username");
+    // Выход из аккаунта из Настроек
+    document.getElementById('btn-logout-settings').addEventListener('click', () => {
+      if (confirm("Выйти из этого аккаунта?")) {
+        let accounts = getSavedAccounts().filter(a => a !== currentUser);
+        localStorage.setItem("larp_accounts", JSON.stringify(accounts));
+
+        if (accounts.length > 0) {
+          localStorage.setItem("larp_username", accounts[0]);
+        } else {
+          localStorage.removeItem("larp_username");
+        }
         location.reload();
       }
+    });
+
+    // Установка/смена пароля в настройках
+    document.getElementById('btn-save-password').addEventListener('click', async () => {
+      const newPass = document.getElementById('settings-new-password').value.trim();
+      if (!newPass || newPass.length < 4) return alert("Пароль должен быть минимум 4 символа!");
+
+      const hashedPassword = await hashPassword(newPass);
+      await setDoc(doc(db, "users", currentUser), { passwordHash: hashedPassword }, { merge: true });
+      alert("Пароль успешно сохранён!");
+      document.getElementById('settings-new-password').value = '';
     });
 
     // --------------------------------------------------------------- //
@@ -1073,6 +1187,8 @@
       document.getElementById('profile-modal').classList.add('active');
       document.getElementById('profile-username-text').innerText = `@${currentUser}`;
       
+      renderAccountsList();
+
       const myData = await loadUserData(currentUser);
       if (myData && myData.avatarUrl) {
         document.getElementById('profile-avatar-img').src = myData.avatarUrl;
