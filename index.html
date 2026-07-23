@@ -119,7 +119,7 @@
     .proposal-btn-group { display: flex; gap: 8px; }
     .proposal-btn { flex: 1; padding: 8px; border-radius: 10px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; text-align: center; }
     .proposal-accept { background: #22c55e; color: #fff; }
-    .proposal-decline { background: rgba(255,255,255,0.1); color: var(--text-sub); }
+    .proposal-decline { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); }
 
     .msg.sticker-msg { background: transparent !important; padding: 0; box-shadow: none; border: none !important; }
     .msg-sticker-img { 
@@ -712,6 +712,7 @@
           type: "wallpaper_proposal",
           wallpaperUrl: tempChatWallpaperBase64,
           author: currentUser,
+          status: "pending", // pending | accepted | declined
           timestamp: serverTimestamp()
         });
       }
@@ -740,10 +741,20 @@
       }
     }
 
-    window.acceptWallpaperProposal = function(msgId, wallpaperUrl) {
+    // Обработка решения по предложению обоев
+    window.respondToWallpaperProposal = async function(msgId, wallpaperUrl, action) {
       if (!currentRoom) return;
-      setRoomWallpaper(currentRoom, wallpaperUrl);
-      alert("Обои приняты и установлены в этом чате!");
+
+      if (action === 'accept') {
+        setRoomWallpaper(currentRoom, wallpaperUrl);
+        await updateDoc(doc(db, "chats", currentRoom, "messages", msgId), {
+          status: "accepted"
+        });
+      } else if (action === 'decline') {
+        await updateDoc(doc(db, "chats", currentRoom, "messages", msgId), {
+          status: "declined"
+        });
+      }
     };
 
     // ----------------- УВЕДОМЛЕНИЯ ----------------- //
@@ -1219,17 +1230,33 @@
       }
 
       if (data.type === "wallpaper_proposal") {
+        let statusContent = '';
+        const status = data.status || 'pending';
+
+        if (status === 'pending') {
+          if (!isMe) {
+            statusContent = `
+              <div class="proposal-btn-group">
+                <button class="proposal-btn proposal-accept" onclick="respondToWallpaperProposal('${msgId}', '${data.wallpaperUrl}', 'accept')">Принять</button>
+                <button class="proposal-btn proposal-decline" onclick="respondToWallpaperProposal('${msgId}', '${data.wallpaperUrl}', 'decline')">Отклонить</button>
+              </div>
+            `;
+          } else {
+            statusContent = `<div style="font-size:11px; color:var(--text-sub); text-align:center;">⏳ Ожидание ответа...</div>`;
+          }
+        } else if (status === 'accepted') {
+          statusContent = `<div style="font-size:12px; color:#22c55e; font-weight:600; text-align:center;">✅ ${isMe ? 'Собеседник принял предложение' : 'Вы приняли предложение'}</div>`;
+        } else if (status === 'declined') {
+          statusContent = `<div style="font-size:12px; color:#ef4444; font-weight:600; text-align:center;">❌ ${isMe ? 'Собеседник отклонил предложение' : 'Вы отклонили предложение'}</div>`;
+        }
+
         wrapper.innerHTML = `
           <div class="wallpaper-proposal-card">
             <div style="font-size:12px; font-weight:bold; color:var(--text-main);">
               ${isMe ? 'Вы предложили обои:' : `@${data.author} предлагает установить обои:`}
             </div>
             <img src="${data.wallpaperUrl}" class="wallpaper-preview-img">
-            ${!isMe ? `
-              <div class="proposal-btn-group">
-                <button class="proposal-btn proposal-accept" onclick="acceptWallpaperProposal('${msgId}', '${data.wallpaperUrl}')">Принять</button>
-              </div>
-            ` : '<div style="font-size:11px; color:var(--text-sub); text-align:center;">Предложение отправлено</div>'}
+            ${statusContent}
           </div>
         `;
       } else if (data.type === "sticker") {
