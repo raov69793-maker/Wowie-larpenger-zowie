@@ -81,11 +81,22 @@
     .msg { max-width: 75%; padding: 8px 12px; border-radius: 12px; font-size: 14px; line-height: 1.4; word-break: break-word; }
     .msg.me { background: var(--accent-active); color: #fff; align-self: flex-end; border-bottom-right-radius: 2px; }
     .msg.peer { background: var(--msg-peer); color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; }
+    .msg.sticker-msg { background: transparent !important; padding: 0; }
+    .msg-sticker-img { width: 140px; height: 140px; object-fit: contain; cursor: pointer; transition: transform 0.1s; }
+    .msg-sticker-img:active { transform: scale(0.95); }
     .msg-time { font-size: 10px; color: rgba(255,255,255,0.6); float: right; margin-left: 8px; margin-top: 4px; }
 
     .input-bar { background: var(--bg-card); padding: 8px 12px; display: flex; gap: 8px; align-items: center; border-top: 1px solid var(--border-color); flex-shrink: 0; }
     .input-bar input { flex: 1; padding: 10px 14px; background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 20px; outline: none; font-size: 14px; }
     .input-bar button { background: var(--accent-color); border: none; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+
+    /* Панель выбора стикеров в чате */
+    #sticker-picker { background: var(--bg-card); border-top: 1px solid var(--border-color); height: 220px; display: none; flex-direction: column; flex-shrink: 0; }
+    #sticker-picker.active { display: flex; }
+    .sticker-tabs { display: flex; gap: 8px; padding: 8px; overflow-x: auto; border-bottom: 1px solid var(--border-color); }
+    .sticker-tab { width: 36px; height: 36px; border-radius: 8px; background: var(--bg-main); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; font-size: 12px; font-weight: bold; }
+    .sticker-grid { flex: 1; overflow-y: auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 10px; }
+    .sticker-item { width: 100%; aspect-ratio: 1; object-fit: contain; cursor: pointer; }
 
     /* Модальные окна */
     .modal-overlay { position: fixed; inset: 0; background: var(--bg-main); z-index: 1500; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
@@ -107,7 +118,10 @@
 
     .presets-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
     .preset-pill { background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; }
-    .preset-pill:hover { border-color: var(--accent-color); }
+
+    /* Превью создаваемого стикерпака */
+    .sticker-create-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; width: 100%; margin-top: 10px; }
+    .sticker-preview-item { width: 100%; aspect-ratio: 1; border-radius: 8px; background: var(--bg-main); object-fit: cover; }
 
     #error-box { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,0,0,0.9); color: white; padding: 8px; font-size: 11px; z-index: 9999; display: none; }
   </style>
@@ -164,8 +178,15 @@
     <div id="chat-box"></div>
 
     <div class="input-bar">
+      <button id="btn-toggle-stickers" style="background:none; border:none; font-size:20px; cursor:pointer;">😀</button>
       <input type="text" id="msg-input" placeholder="Написать сообщение...">
       <button id="btn-send">➔</button>
+    </div>
+
+    <!-- Выбор стикеров -->
+    <div id="sticker-picker">
+      <div class="sticker-tabs" id="sticker-tabs"></div>
+      <div class="sticker-grid" id="sticker-grid"></div>
     </div>
   </div>
 
@@ -186,7 +207,17 @@
       <button id="btn-choose-file" class="auth-btn">Сменить фото профиля 📷</button>
       <p id="upload-status" style="font-size:12px; color:var(--text-sub); display:none;">Сжатие и загрузка...</p>
 
-      <!-- ПРЕСЕТЫ -->
+      <!-- СОЗДАНИЕ СТИКЕРПАКА -->
+      <div class="custom-section">
+        <h4>✨ Создать свой стикерпак</h4>
+        <input type="text" id="pack-title-input" class="auth-input" placeholder="Название пака..." style="margin-bottom:8px;">
+        <button id="btn-add-sticker-imgs" class="auth-btn" style="background:var(--bg-main); border:1px solid var(--border-color); color:var(--text-main); margin-bottom:8px;">Добавить стикеры (картинки) 🖼️</button>
+        <input type="file" id="sticker-files-input" accept="image/*" multiple style="display:none;">
+        <div class="sticker-create-grid" id="sticker-create-preview"></div>
+        <button id="btn-save-sticker-pack" class="auth-btn" style="margin-top:10px; display:none;">Опубликовать стикерпак 🚀</button>
+      </div>
+
+      <!-- ТЕМЫ -->
       <div class="custom-section">
         <h4>🎨 Готовые темы</h4>
         <div class="theme-grid">
@@ -197,23 +228,22 @@
         </div>
       </div>
 
-      <!-- РУЧНАЯ НАСТРОЙКА ЦВЕТОВ -->
+      <!-- КОНСТРУКТОР ЦВЕТОВ -->
       <div class="custom-section">
-        <h4>🛠️ Свои цвета (Конструктор)</h4>
+        <h4>🛠️ Свои цвета</h4>
         <div class="color-picker-row">
-          <span>Цвет 1 (Акцент / Кнопки):</span>
+          <span>Цвет 1 (Акцент):</span>
           <input type="color" id="picker-accent" value="#5288c1">
         </div>
         <div class="color-picker-row">
-          <span>Цвет 2 (Фон приложения):</span>
+          <span>Цвет 2 (Фон):</span>
           <input type="color" id="picker-bg" value="#0e1621">
         </div>
         <button id="btn-save-preset" class="auth-btn" style="margin-top: 6px; font-size: 13px; padding: 8px;">Сохранить как пресет 💾</button>
       </div>
 
-      <!-- СОХРАНЕННЫЕ ПРЕСЕТЫ -->
       <div class="custom-section" id="saved-presets-section" style="display:none;">
-        <h4>📂 Ваши сохраненные темы</h4>
+        <h4>📂 Ваши темы</h4>
         <div class="presets-container" id="presets-list"></div>
       </div>
 
@@ -221,14 +251,27 @@
       <div class="custom-section">
         <h4>🖼️ Обои в чате</h4>
         <button id="btn-bg-file" class="auth-btn" style="background: var(--bg-main); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 8px;">Загрузить свое фото на фон 🏞️</button>
-        <button onclick="resetChatWallpaper()" class="auth-btn" style="background: transparent; color: var(--text-sub); font-size: 13px; padding: 4px;">Сбросить обои до дефолтных</button>
+        <button onclick="resetChatWallpaper()" class="auth-btn" style="background: transparent; color: var(--text-sub); font-size: 13px; padding: 4px;">Сбросить обои</button>
         <input type="file" id="bg-file-input" accept="image/*" style="display:none;">
       </div>
 
     </div>
   </div>
 
-  <!-- Чужой профиль -->
+  <!-- МОДАЛКА ПРОСМОТРА СТИКЕРПАКА -->
+  <div id="sticker-pack-modal" class="modal-overlay">
+    <div class="app-header" style="background:transparent; padding:0 0 16px 0;">
+      <div class="app-title" id="pack-modal-title">Стикерпак</div>
+      <button id="btn-close-pack-modal" style="background:none; border:none; color:var(--accent-color); font-size:16px;">Закрыть</button>
+    </div>
+    <div class="profile-card">
+      <p id="pack-modal-author" style="font-size:13px; color:var(--text-sub);"></p>
+      <div class="sticker-grid" id="pack-modal-grid" style="width:100%; max-height:260px;"></div>
+      <button id="btn-add-pack-to-my" class="auth-btn">Добавить в мою коллекцию ➕</button>
+    </div>
+  </div>
+
+  <!-- ЧУЖОЙ ПРОФИЛЬ -->
   <div id="peer-profile-modal" class="modal-overlay">
     <div class="app-header" style="background:transparent; padding:0 0 16px 0;">
       <div class="app-title">Профиль пользователя</div>
@@ -276,14 +319,19 @@
     let myChats = JSON.parse(localStorage.getItem("larp_chats") || "[]");
     let usersCache = {};
 
+    // Стикеры
+    let myStickerPacks = JSON.parse(localStorage.getItem("larp_my_sticker_packs") || "[]");
+    let newPackStickersTemp = [];
+    let currentViewPack = null;
+
+    // Стили и Темы
     const defaultThemes = {
-      default: { accent: '#5288c1', active: '#2b5278', bg: '#0e1621', card: '#17212b', msgPeer: '#182533', border: '#101419' },
-      midnight: { accent: '#38bdf8', active: '#0284c7', bg: '#030712', card: '#0f172a', msgPeer: '#1e293b', border: '#1e293b' },
-      cyberpunk: { accent: '#a855f7', active: '#7e22ce', bg: '#09090b', card: '#18181b', msgPeer: '#27272a', border: '#27272a' },
-      forest: { accent: '#22c55e', active: '#15803d', bg: '#022c22', card: '#064e3b', msgPeer: '#065f46', border: '#065f46' }
+      default: { accent: '#5288c1', bg: '#0e1621' },
+      midnight: { accent: '#38bdf8', bg: '#030712' },
+      cyberpunk: { accent: '#a855f7', bg: '#09090b' },
+      forest: { accent: '#22c55e', bg: '#022c22' }
     };
 
-    // Применить кастомные цвета (Цвет 1 и Цвет 2)
     window.applyCustomColors = function(accentColor, bgColor) {
       document.documentElement.style.setProperty('--accent-color', accentColor);
       document.documentElement.style.setProperty('--accent-active', adjustBrightness(accentColor, -20));
@@ -295,7 +343,6 @@
       document.documentElement.style.setProperty('--chat-bg-image', 'none');
     };
 
-    // Вспомогательная функция для генерации оттенков
     function adjustBrightness(hex, percent) {
       let num = parseInt(hex.replace("#",""), 16);
       let r = (num >> 16) + percent;
@@ -310,11 +357,8 @@
     window.applyTheme = function(themeName) {
       let t = defaultThemes[themeName];
       if (!t) {
-        // Проверяем сохраненные пользовательские пресеты
         let customPresets = JSON.parse(localStorage.getItem("larp_custom_presets") || "{}");
-        if (customPresets[themeName]) {
-          t = customPresets[themeName];
-        }
+        if (customPresets[themeName]) t = customPresets[themeName];
       }
 
       if (t) {
@@ -323,16 +367,13 @@
       }
 
       const savedBg = localStorage.getItem("larp_custom_bg");
-      if (savedBg) {
-        document.documentElement.style.setProperty('--chat-bg-image', `url(${savedBg})`);
-      }
+      if (savedBg) document.documentElement.style.setProperty('--chat-bg-image', `url(${savedBg})`);
     };
 
-    // Сохранение текущего конструктора как пресета
     document.getElementById('btn-save-preset').addEventListener('click', () => {
       const accent = document.getElementById('picker-accent').value;
       const bg = document.getElementById('picker-bg').value;
-      const presetName = prompt("Введите название для вашей темы:", "Моя тема");
+      const presetName = prompt("Название темы:", "Моя тема");
       if (!presetName) return;
 
       let customPresets = JSON.parse(localStorage.getItem("larp_custom_presets") || "{}");
@@ -365,20 +406,13 @@
       }
     }
 
-    // Слушатели ручных пикеров
-    document.getElementById('picker-accent').addEventListener('input', (e) => {
-      applyCustomColors(e.target.value, document.getElementById('picker-bg').value);
-    });
-    document.getElementById('picker-bg').addEventListener('input', (e) => {
-      applyCustomColors(document.getElementById('picker-accent').value, e.target.value);
-    });
+    document.getElementById('picker-accent').addEventListener('input', (e) => applyCustomColors(e.target.value, document.getElementById('picker-bg').value));
+    document.getElementById('picker-bg').addEventListener('input', (e) => applyCustomColors(document.getElementById('picker-accent').value, e.target.value));
 
-    // Загрузка сохраненной темы при старте
-    const savedTheme = localStorage.getItem("larp_current_theme") || "default";
-    applyTheme(savedTheme);
+    applyTheme(localStorage.getItem("larp_current_theme") || "default");
     renderSavedPresets();
 
-    // Загрузка кастомных обоев
+    // Обои
     const bgFileInput = document.getElementById('bg-file-input');
     document.getElementById('btn-bg-file').addEventListener('click', () => bgFileInput.click());
 
@@ -410,10 +444,10 @@
 
     window.resetChatWallpaper = function() {
       localStorage.removeItem("larp_custom_bg");
-      const currentTheme = localStorage.getItem("larp_current_theme") || "default";
-      applyTheme(currentTheme);
+      applyTheme(localStorage.getItem("larp_current_theme") || "default");
     };
 
+    // АВТОРИЗАЦИЯ
     if (currentUser) {
       document.getElementById('auth-screen').style.display = 'none';
       initApp();
@@ -576,16 +610,24 @@
     document.getElementById('btn-back').addEventListener('click', () => {
       activePeer = null;
       document.getElementById('chat-screen').classList.remove('active');
+      document.getElementById('sticker-picker').classList.remove('active');
       renderChatsList();
     });
 
-    async function sendMessage() {
-      const input = document.getElementById('msg-input');
-      const text = input.value.trim();
+    async function sendMessage(text = '', isSticker = false, stickerData = null) {
+      if (!currentRoom) return;
 
-      if (text && currentRoom) {
-        input.value = '';
+      if (isSticker && stickerData) {
         await addDoc(collection(db, "chats", currentRoom, "messages"), {
+          type: "sticker",
+          stickerUrl: stickerData.url,
+          packId: stickerData.packId,
+          author: currentUser,
+          timestamp: serverTimestamp()
+        });
+      } else if (text) {
+        await addDoc(collection(db, "chats", currentRoom, "messages"), {
+          type: "text",
           text: text,
           author: currentUser,
           timestamp: serverTimestamp()
@@ -598,19 +640,29 @@
       const isMe = data.author.toLowerCase() === currentUser.toLowerCase();
 
       const div = document.createElement('div');
-      div.className = `msg ${isMe ? 'me' : 'peer'}`;
-
+      
       let timeStr = "";
       if (data.timestamp) {
         const date = data.timestamp.toDate();
         timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
 
-      div.innerHTML = `
-        <span class="msg-text"></span>
-        <span class="msg-time">${timeStr}</span>
-      `;
-      div.querySelector('.msg-text').innerText = data.text;
+      if (data.type === "sticker") {
+        div.className = `msg ${isMe ? 'me' : 'peer'} sticker-msg`;
+        div.innerHTML = `
+          <img src="${data.stickerUrl}" class="msg-sticker-img">
+          <span class="msg-time" style="color:#aaa; background:rgba(0,0,0,0.4); padding:2px 4px; border-radius:4px;">${timeStr}</span>
+        `;
+        div.querySelector('.msg-sticker-img').onclick = () => openStickerPackModal(data.packId);
+      } else {
+        div.className = `msg ${isMe ? 'me' : 'peer'}`;
+        div.innerHTML = `
+          <span class="msg-text"></span>
+          <span class="msg-time">${timeStr}</span>
+        `;
+        div.querySelector('.msg-text').innerText = data.text || "";
+      }
+
       box.appendChild(div);
       box.scrollTop = box.scrollHeight;
     }
@@ -623,9 +675,197 @@
       }
     });
 
-    document.getElementById('btn-send').addEventListener('click', sendMessage);
+    document.getElementById('btn-send').addEventListener('click', () => {
+      const input = document.getElementById('msg-input');
+      const text = input.value.trim();
+      if (text) {
+        sendMessage(text, false);
+        input.value = '';
+      }
+    });
+
     document.getElementById('msg-input').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
+      if (e.key === 'Enter') {
+        const text = e.target.value.trim();
+        if (text) {
+          sendMessage(text, false);
+          e.target.value = '';
+        }
+      }
+    });
+
+    // ---------------- СТИКЕРЫ ---------------- //
+
+    document.getElementById('btn-toggle-stickers').addEventListener('click', () => {
+      const picker = document.getElementById('sticker-picker');
+      picker.classList.toggle('active');
+      if (picker.classList.contains('active')) {
+        renderStickerPicker();
+      }
+    });
+
+    async function renderStickerPicker() {
+      const tabsContainer = document.getElementById('sticker-tabs');
+      const grid = document.getElementById('sticker-grid');
+      tabsContainer.innerHTML = '';
+      grid.innerHTML = '';
+
+      if (myStickerPacks.length === 0) {
+        grid.innerHTML = `<div style="grid-column: span 4; text-align:center; padding: 20px; color:var(--text-sub); font-size:12px;">У вас нет стикерпаков.<br>Зайдите в Настройки и создайте свой!</div>`;
+        return;
+      }
+
+      for (let i = 0; i < myStickerPacks.length; i++) {
+        const packId = myStickerPacks[i];
+        const snap = await getDoc(doc(db, "sticker_packs", packId));
+        if (!snap.exists()) continue;
+
+        const pack = snap.data();
+        const tab = document.createElement('div');
+        tab.className = 'sticker-tab';
+        tab.innerText = pack.title[0].toUpperCase();
+        
+        tab.onclick = () => {
+          grid.innerHTML = '';
+          pack.stickers.forEach(url => {
+            const img = document.createElement('img');
+            img.src = url;
+            img.className = 'sticker-item';
+            img.onclick = () => {
+              sendMessage('', true, { url, packId });
+            };
+            grid.appendChild(img);
+          });
+        };
+
+        tabsContainer.appendChild(tab);
+        if (i === 0) tab.click(); // Открываем первый пак по умолчанию
+      }
+    }
+
+    // Создание стикерпака в настройках
+    const stickerFilesInput = document.getElementById('sticker-files-input');
+    document.getElementById('btn-add-sticker-imgs').addEventListener('click', () => stickerFilesInput.click());
+
+    stickerFilesInput.addEventListener('change', (e) => {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
+
+      const previewGrid = document.getElementById('sticker-create-preview');
+
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const size = 180;
+            canvas.width = size;
+            canvas.height = size;
+
+            const minDim = Math.min(img.width, img.height);
+            const sx = (img.width - minDim) / 2;
+            const sy = (img.height - minDim) / 2;
+
+            ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
+            const base64Url = canvas.toDataURL('image/png');
+
+            newPackStickersTemp.push(base64Url);
+
+            const previewImg = document.createElement('img');
+            previewImg.src = base64Url;
+            previewImg.className = 'sticker-preview-item';
+            previewGrid.appendChild(previewImg);
+
+            if (newPackStickersTemp.length > 0) {
+              document.getElementById('btn-save-sticker-pack').style.display = 'block';
+            }
+          };
+          img.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+
+    document.getElementById('btn-save-sticker-pack').addEventListener('click', async () => {
+      const title = document.getElementById('pack-title-input').value.trim();
+      if (!title) {
+        alert("Введите название стикерпака!");
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-sticker-pack');
+      btn.innerText = "Опубликование...";
+      btn.disabled = true;
+
+      const packRef = doc(collection(db, "sticker_packs"));
+      const packId = packRef.id;
+
+      await setDoc(packRef, {
+        title: title,
+        author: currentUser,
+        stickers: newPackStickersTemp,
+        createdAt: serverTimestamp()
+      });
+
+      if (!myStickerPacks.includes(packId)) {
+        myStickerPacks.push(packId);
+        localStorage.setItem("larp_my_sticker_packs", JSON.stringify(myStickerPacks));
+      }
+
+      alert("Стикерпак успешно создан!");
+      document.getElementById('pack-title-input').value = '';
+      document.getElementById('sticker-create-preview').innerHTML = '';
+      newPackStickersTemp = [];
+      btn.style.display = 'none';
+      btn.innerText = "Опубликовать стикерпак 🚀";
+      btn.disabled = false;
+    });
+
+    // Просмотр и сохранение чужих стикерпаков
+    async function openStickerPackModal(packId) {
+      currentViewPack = packId;
+      const snap = await getDoc(doc(db, "sticker_packs", packId));
+      if (!snap.exists()) return;
+
+      const pack = snap.data();
+      document.getElementById('pack-modal-title').innerText = pack.title;
+      document.getElementById('pack-modal-author').innerText = `Автор: @${pack.author}`;
+
+      const grid = document.getElementById('pack-modal-grid');
+      grid.innerHTML = '';
+      
+      pack.stickers.forEach(url => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'sticker-item';
+        grid.appendChild(img);
+      });
+
+      const btnAdd = document.getElementById('btn-add-pack-to-my');
+      if (myStickerPacks.includes(packId)) {
+        btnAdd.innerText = "Уже в вашей коллекции ✅";
+        btnAdd.disabled = true;
+      } else {
+        btnAdd.innerText = "Добавить в мою коллекцию ➕";
+        btnAdd.disabled = false;
+      }
+
+      document.getElementById('sticker-pack-modal').classList.add('active');
+    }
+
+    document.getElementById('btn-add-pack-to-my').addEventListener('click', () => {
+      if (currentViewPack && !myStickerPacks.includes(currentViewPack)) {
+        myStickerPacks.push(currentViewPack);
+        localStorage.setItem("larp_my_sticker_packs", JSON.stringify(myStickerPacks));
+        document.getElementById('btn-add-pack-to-my').innerText = "Добавлено! ✅";
+        document.getElementById('btn-add-pack-to-my').disabled = true;
+      }
+    });
+
+    document.getElementById('btn-close-pack-modal').addEventListener('click', () => {
+      document.getElementById('sticker-pack-modal').classList.remove('active');
     });
 
     // Чужой профиль
@@ -674,7 +914,7 @@
       document.getElementById('profile-modal').classList.remove('active');
     });
 
-    // Аватарка
+    // Смена аватара
     const fileInput = document.getElementById('avatar-file-input');
     document.getElementById('btn-choose-file').addEventListener('click', () => fileInput.click());
     document.getElementById('btn-trigger-file').addEventListener('click', () => fileInput.click());
