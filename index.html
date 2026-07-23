@@ -62,7 +62,7 @@
     #chat-screen.active { transform: translateX(0); }
 
     .chat-header { background: var(--bg-card); padding: 10px 16px; display: flex; align-items: center; gap: 12px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-    .back-btn { background: none; border: none; color: var(--accent-color); font-size: 20px; cursor: pointer; padding-right: 8px; }
+    .back-btn { background: none; border: none; color: var(--accent-color); font-size: 22px; cursor: pointer; padding-right: 8px; line-height: 1; }
     .chat-header-user { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; }
 
     #chat-box { 
@@ -163,7 +163,8 @@
   <!-- Экран чата -->
   <div id="chat-screen">
     <div class="chat-header">
-      <button class="back-btn" id="btn-back">➔</button>
+      <!-- ИСПРАВЛЕНА СТРЕЛКА: СТАЛА ЛЕВОЙ ← -->
+      <button class="back-btn" id="btn-back">←</button>
 
       <div class="chat-header-user" id="btn-open-peer-profile">
         <img id="chat-peer-avatar" class="avatar" style="width:38px; height:38px; display:none;">
@@ -341,6 +342,14 @@
       document.documentElement.style.setProperty('--border-color', adjustBrightness(bgColor, 8));
       document.documentElement.style.setProperty('--chat-bg-color', bgColor);
       document.documentElement.style.setProperty('--chat-bg-image', 'none');
+
+      // ИСПРАВЛЕНИЕ: Обновляем инпуты выбора цвета при применении темы
+      const pickerAccent = document.getElementById('picker-accent');
+      const pickerBg = document.getElementById('picker-bg');
+      if (pickerAccent && pickerBg) {
+        pickerAccent.value = accentColor;
+        pickerBg.value = bgColor;
+      }
     };
 
     function adjustBrightness(hex, percent) {
@@ -739,7 +748,7 @@
         };
 
         tabsContainer.appendChild(tab);
-        if (i === 0) tab.click(); // Открываем первый пак по умолчанию
+        if (i === 0) tab.click();
       }
     }
 
