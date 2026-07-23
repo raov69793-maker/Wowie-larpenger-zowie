@@ -120,6 +120,7 @@
     .proposal-btn { flex: 1; padding: 8px; border-radius: 10px; border: none; font-weight: 700; font-size: 12px; cursor: pointer; text-align: center; }
     .proposal-accept { background: #22c55e; color: #fff; }
     .proposal-decline { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .proposal-cancel { width: 100%; background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); margin-top: 4px; }
 
     .msg.sticker-msg { background: transparent !important; padding: 0; box-shadow: none; border: none !important; }
     .msg-sticker-img { 
@@ -712,7 +713,7 @@
           type: "wallpaper_proposal",
           wallpaperUrl: tempChatWallpaperBase64,
           author: currentUser,
-          status: "pending", // pending | accepted | declined
+          status: "pending", // pending | accepted | declined | cancelled
           timestamp: serverTimestamp()
         });
       }
@@ -753,6 +754,10 @@
       } else if (action === 'decline') {
         await updateDoc(doc(db, "chats", currentRoom, "messages", msgId), {
           status: "declined"
+        });
+      } else if (action === 'cancel') {
+        await updateDoc(doc(db, "chats", currentRoom, "messages", msgId), {
+          status: "cancelled"
         });
       }
     };
@@ -1242,12 +1247,17 @@
               </div>
             `;
           } else {
-            statusContent = `<div style="font-size:11px; color:var(--text-sub); text-align:center;">⏳ Ожидание ответа...</div>`;
+            statusContent = `
+              <div style="font-size:11px; color:var(--text-sub); text-align:center;">⏳ Ожидание ответа...</div>
+              <button class="proposal-btn proposal-cancel" onclick="respondToWallpaperProposal('${msgId}', '${data.wallpaperUrl}', 'cancel')">Отменить предложение</button>
+            `;
           }
         } else if (status === 'accepted') {
-          statusContent = `<div style="font-size:12px; color:#22c55e; font-weight:600; text-align:center;">✅ ${isMe ? 'Собеседник принял предложение' : 'Вы приняли предложение'}</div>`;
+          statusContent = `<div style="font-size:12px; color:#22c55e; font-weight:600; text-align:center;">✅ ${isMe ? 'Собеседник принял предложение!' : 'Вы приняли предложение'}</div>`;
         } else if (status === 'declined') {
           statusContent = `<div style="font-size:12px; color:#ef4444; font-weight:600; text-align:center;">❌ ${isMe ? 'Собеседник отклонил предложение' : 'Вы отклонили предложение'}</div>`;
+        } else if (status === 'cancelled') {
+          statusContent = `<div style="font-size:12px; color:var(--text-sub); font-weight:600; text-align:center;">🚫 ${isMe ? 'Вы отменили предложение' : 'Предложение отменено'}</div>`;
         }
 
         wrapper.innerHTML = `
@@ -1259,6 +1269,7 @@
             ${statusContent}
           </div>
         `;
+        wrapper.onclick = () => openMsgActions(msgId, data);
       } else if (data.type === "sticker") {
         wrapper.innerHTML = `
           <div class="msg sticker-msg">
