@@ -10,17 +10,30 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     body { background: #0e1621; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     
-    /* Шапка Telegram */
-    .header { background: #17212b; padding: 10px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #101419; box-shadow: 0 2px 4px rgba(0,0,0,0.2); z-index: 10; }
+    /* Окно авторизации / регистрации */
+    #auth-screen { position: fixed; inset: 0; background: #0e1621; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .auth-card { background: #17212b; border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); text-align: center; }
+    .auth-card h2 { color: #5288c1; margin-bottom: 8px; }
+    .auth-card p { font-size: 13px; color: #7f91a4; margin-bottom: 20px; }
+    .auth-input { width: 100%; padding: 12px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 10px; margin-bottom: 12px; outline: none; font-size: 14px; }
+    .auth-btn { width: 100%; padding: 12px; background: #5288c1; border: none; color: #fff; border-radius: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
+    .auth-error { color: #e53935; font-size: 12px; margin-top: 10px; display: none; }
+
+    /* Главный интерфейс */
+    .header { background: #17212b; padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #101419; }
     .header-info { display: flex; flex-direction: column; }
     .header-title { font-weight: 600; font-size: 16px; color: #f5f5f5; }
     .header-status { font-size: 12px; color: #64b5f6; }
 
-    /* Панель профиля и поиска */
-    .user-bar { background: #242f3d; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #101419; }
-    .input-row { display: flex; gap: 8px; }
-    .user-bar input { flex: 1; padding: 8px 12px; background: #17212b; border: 1px solid #2b5278; color: #fff; border-radius: 8px; outline: none; font-size: 13px; }
-    .user-bar button { padding: 8px 14px; background: #2b5278; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+    /* Боковая/Верхняя панель поиска и чатов */
+    .search-bar { background: #17212b; padding: 8px 12px; display: flex; gap: 8px; border-bottom: 1px solid #101419; }
+    .search-bar input { flex: 1; padding: 8px 12px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 8px; outline: none; font-size: 13px; }
+    .search-bar button { padding: 8px 14px; background: #2b5278; color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+
+    /* Список диалогов */
+    #chats-list { display: flex; gap: 8px; padding: 8px 12px; background: #17212b; overflow-x: auto; border-bottom: 1px solid #101419; }
+    .chat-item { background: #242f3d; padding: 6px 12px; border-radius: 16px; font-size: 12px; white-space: nowrap; cursor: pointer; border: 1px solid transparent; }
+    .chat-item.active { background: #2b5278; border-color: #64b5f6; }
 
     /* Чат-зона */
     #chat-box { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background-color: #0e1621; background-image: radial-gradient(#17212b 1px, transparent 0); background-size: 16px 16px; }
@@ -37,51 +50,56 @@
     .input-bar { background: #17212b; padding: 8px 12px; display: flex; gap: 8px; align-items: center; border-top: 1px solid #101419; }
     .input-bar input { flex: 1; padding: 10px 14px; background: #0e1621; border: 1px solid #242f3d; color: #fff; border-radius: 20px; outline: none; font-size: 14px; }
     .input-bar button { background: #5288c1; border: none; width: 40px; height: 40px; border-radius: 50%; color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-
-    #error-box { position: fixed; top: 0; left: 0; right: 0; background: rgba(255,0,0,0.9); color: white; padding: 8px; font-size: 11px; z-index: 9999; display: none; }
   </style>
 </head>
 <body>
 
-  <div id="error-box"></div>
+  <!-- Окно Авторизации/Регистрации -->
+  <div id="auth-screen">
+    <div class="auth-card">
+      <h2>Larpessenger 🚀</h2>
+      <p>Придумай уникальный @username для входа</p>
+      <input type="text" id="reg-username" class="auth-input" placeholder="Юзернейм (например: zakhar)">
+      <button id="btn-register" class="auth-btn">Войти / Зарегистрироваться</button>
+      <div id="auth-error" class="auth-error">Юзернейм уже занят!</div>
+    </div>
+  </div>
 
   <!-- Шапка -->
   <div class="header">
     <div class="header-info">
-      <div class="header-title" id="chat-title">Larpessenger</div>
-      <div class="header-status" id="chat-status">Чат не выбран</div>
+      <div class="header-title" id="my-profile-name">@...</div>
+      <div class="header-status" id="chat-status">Выбери чат</div>
     </div>
     <button id="btn-push" style="background:none; border:none; font-size:18px; cursor:pointer;">🔔</button>
   </div>
 
-  <!-- Панель профиля и поиска по Юзернейму -->
-  <div class="user-bar">
-    <div class="input-row">
-      <input type="text" id="my-username" placeholder="Твой @username (без @)" value="user1">
-    </div>
-    <div class="input-row">
-      <input type="text" id="target-username" placeholder="Найти собеседника по @username">
-      <button id="btn-start-chat">Написать</button>
-    </div>
+  <!-- Поиск контактов -->
+  <div class="search-bar">
+    <input type="text" id="target-username" placeholder="Найти собеседника по @username">
+    <button id="btn-start-chat">Написать</button>
   </div>
 
-  <!-- История чата -->
+  <!-- Список чатов -->
+  <div id="chats-list"></div>
+
+  <!-- Чат-зона -->
   <div id="chat-box"></div>
 
   <!-- Панель ввода -->
   <div class="input-bar">
-    <input type="text" id="msg-input" placeholder="Написать сообщение...">
-    <button id="btn-send">➔</button>
+    <input type="text" id="msg-input" placeholder="Написать сообщение..." disabled>
+    <button id="btn-send" disabled>➔</button>
   </div>
 
   <!-- Firebase SDK -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, doc, getDoc, setDoc, addDoc, query, orderBy, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getMessaging, getToken } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBJsk9oUrKLMV0L7tgyxTzMZ-WgRwWgYDA",
+      apiKey: "AIzaSyBJsk9oUrKLMV0L7tgyxTzMZ-WgRwVgYDA",
       authDomain: "larpessenger.firebaseapp.com",
       projectId: "larpessenger",
       storageBucket: "larpessenger.firebasestorage.app",
@@ -94,25 +112,82 @@
     const messaging = getMessaging(app);
     const vapidKey = "BJ8SpCv5f19isktlc5ZN35BGwV62A1wgqzGBaZn60vKQnnn-z5SLCUs4pn7tkbtDYoWqPcp99aFb066iQ0XQFB8";
 
+    let currentUser = localStorage.getItem("larp_username") || null;
     let currentRoom = null;
     let unsubscribe = null;
+    let myChats = JSON.parse(localStorage.getItem("larp_chats") || "[]");
 
-    // Генерация названия приватного чата (алфавитный порядок, чтобы у обоих юзеров совпадал ID комнаты)
+    // 1. Авторизация и Регистрация
+    if (currentUser) {
+      document.getElementById('auth-screen').style.display = 'none';
+      initApp();
+    }
+
+    document.getElementById('btn-register').addEventListener('click', async () => {
+      const input = document.getElementById('reg-username').value.toLowerCase().replace('@', '').trim();
+      const errBox = document.getElementById('auth-error');
+
+      if (!input) return;
+
+      const userRef = doc(db, "users", input);
+      const userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        // Юзер существует — авторизуем (можно добавить пароль позже)
+        loginUser(input);
+      } else {
+        // Регистрируем нового юзера
+        await setDoc(userRef, { createdAt: serverTimestamp() });
+        loginUser(input);
+      }
+    });
+
+    function loginUser(username) {
+      currentUser = username;
+      localStorage.setItem("larp_username", username);
+      document.getElementById('auth-screen').style.display = 'none';
+      initApp();
+    }
+
+    function initApp() {
+      document.getElementById('my-profile-name').innerText = `@${currentUser}`;
+      renderChatsList();
+    }
+
+    // 2. Логика чатов
     function getPrivateChatId(userA, userB) {
       return [userA.toLowerCase().trim(), userB.toLowerCase().trim()].sort().join("_");
     }
 
-    // Подключение к диалогу
-    function openChatWith(targetUser) {
-      const myUser = document.getElementById('my-username').value.trim();
-      if (!myUser || !targetUser) {
-        alert("Заполни свой юзернейм и юзернейм собеседника!");
-        return;
+    function addChatToList(targetUser) {
+      if (!myChats.includes(targetUser) && targetUser !== currentUser) {
+        myChats.push(targetUser);
+        localStorage.setItem("larp_chats", JSON.stringify(myChats));
       }
+      renderChatsList();
+    }
 
-      currentRoom = getPrivateChatId(myUser, targetUser);
+    function renderChatsList() {
+      const container = document.getElementById('chats-list');
+      container.innerHTML = '';
+      myChats.forEach(user => {
+        const item = document.createElement('div');
+        item.className = `chat-item ${currentRoom === getPrivateChatId(currentUser, user) ? 'active' : ''}`;
+        item.innerText = `@${user}`;
+        item.onclick = () => openChatWith(user);
+        container.appendChild(item);
+      });
+    }
+
+    function openChatWith(targetUser) {
+      addChatToList(targetUser);
+      currentRoom = getPrivateChatId(currentUser, targetUser);
+      
       document.getElementById('chat-status').innerText = `Диалог с @${targetUser}`;
-      document.getElementById('chat-box').innerHTML = '';
+      document.getElementById('msg-input').disabled = false;
+      document.getElementById('btn-send').disabled = false;
+
+      renderChatsList();
 
       if (unsubscribe) unsubscribe();
 
@@ -127,29 +202,24 @@
       });
     }
 
-    // Отправка сообщения
+    // 3. Отправка сообщений
     async function sendMessage() {
       const input = document.getElementById('msg-input');
       const text = input.value.trim();
-      const myUser = document.getElementById('my-username').value.trim();
 
-      if (text && currentRoom && myUser) {
+      if (text && currentRoom) {
         input.value = '';
         await addDoc(collection(db, "chats", currentRoom, "messages"), {
           text: text,
-          author: myUser,
+          author: currentUser,
           timestamp: serverTimestamp()
         });
-      } else if (!currentRoom) {
-        alert("Сначала введи @username собеседника и нажми 'Написать'!");
       }
     }
 
-    // Отрисовка сообщения
     function appendMessage(data) {
       const box = document.getElementById('chat-box');
-      const myUser = document.getElementById('my-username').value.trim().toLowerCase();
-      const isMe = data.author.toLowerCase() === myUser;
+      const isMe = data.author.toLowerCase() === currentUser.toLowerCase();
 
       const div = document.createElement('div');
       div.className = `msg ${isMe ? 'me' : 'peer'}`;
@@ -171,10 +241,13 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    // Кнопки и события
+    // События
     document.getElementById('btn-start-chat').addEventListener('click', () => {
       const target = document.getElementById('target-username').value.replace('@', '').trim();
-      if (target) openChatWith(target);
+      if (target) {
+        openChatWith(target);
+        document.getElementById('target-username').value = '';
+      }
     });
 
     document.getElementById('btn-send').addEventListener('click', sendMessage);
@@ -182,7 +255,7 @@
       if (e.key === 'Enter') sendMessage();
     });
 
-    // Push Уведомления
+    // Пуш уведомления
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').then((registration) => {
         document.getElementById('btn-push').addEventListener('click', async () => {
